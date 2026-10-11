@@ -4,6 +4,7 @@ export interface Market {
   name: string;
   provider: 'bStock' | 'Ondo';
   contractAddress: string;
+  decimals?: number;
   chainId: '56';
   price: number;
   referencePrice: number;

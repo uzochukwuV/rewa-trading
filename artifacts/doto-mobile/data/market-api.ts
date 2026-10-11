@@ -23,7 +23,7 @@ type PortfolioResponse = {
   updatedAt: string;
 };
 
-function apiBaseUrl() {
+export function apiBaseUrl() {
   const explicitUrl = process.env.EXPO_PUBLIC_BINANCE_API_URL;
   if (explicitUrl) return explicitUrl.replace(/\/$/, '');
 

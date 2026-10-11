@@ -24,7 +24,7 @@ export default function AssetDetailScreen() {
 
   const startTrade = () => {
     state.setSelectedSymbol(market.symbol);
-    router.push({ pathname: '/(tabs)/trade', params: { symbol: market.symbol } });
+    router.push({ pathname: '/(tabs)/trade', params: { symbol: market.symbol, side: 'buy' } });
   };
 
   return (
@@ -158,7 +158,7 @@ export default function AssetDetailScreen() {
         </>
       )}
       <PrimaryButton title={`Trade ${market.symbol}`} icon="trending-up" onPress={startTrade} />
-      <Txt size={11} color={colors.mutedForeground} style={{ textAlign: 'center' }}>Mock prices and analysis · No live trading</Txt>
+      <Txt size={11} color={colors.mutedForeground} style={{ textAlign: 'center' }}>Indicative market data · Request a live spot quote on Spot</Txt>
     </Page>
   );
 }

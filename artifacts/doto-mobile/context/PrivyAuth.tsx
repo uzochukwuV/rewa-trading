@@ -34,6 +34,7 @@ interface PrivyAuthValue {
   loginWithEmailCode: (email: string, code: string) => Promise<void>;
   logout: () => Promise<void>;
   getAccessToken: () => Promise<string | null>;
+  requestWallet: (method: string, params?: unknown[]) => Promise<unknown>;
 }
 
 const emptyAuth: PrivyAuthValue = {
@@ -52,6 +53,7 @@ const emptyAuth: PrivyAuthValue = {
   loginWithEmailCode: async () => {},
   logout: async () => {},
   getAccessToken: async () => null,
+  requestWallet: async () => { throw new Error('Sign in and create a wallet before trading.'); },
 };
 
 const PrivyAuthContext = createContext<PrivyAuthValue>(emptyAuth);
@@ -62,6 +64,16 @@ function PrivyAuthBridge({ children }: { children: ReactNode }) {
   const oauth = useLoginWithOAuth();
   const email = useLoginWithEmail();
   const walletAddress = wallets[0]?.address ?? null;
+  const requestWallet = async (method: string, params: unknown[] = []) => {
+    const wallet = wallets[0];
+    if (!wallet) throw new Error('Your Privy wallet is not ready yet.');
+    const provider = await wallet.getProvider();
+    const chainId = await provider.request({ method: 'eth_chainId' });
+    if (String(chainId).toLowerCase() !== '0x38') {
+      await provider.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0x38' }] });
+    }
+    return provider.request({ method, params } as never);
+  };
   const busy = oauth.state.status === 'loading' ||
     email.state.status === 'sending-code' || email.state.status === 'submitting-code';
 
@@ -81,7 +93,8 @@ function PrivyAuthBridge({ children }: { children: ReactNode }) {
     loginWithEmailCode: async (address, code) => { await email.loginWithCode({ email: address, code }); },
     logout,
     getAccessToken,
-  }), [isReady, user, walletAddress, busy, email.state, oauth, email, logout, getAccessToken, privyError]);
+    requestWallet,
+  }), [isReady, user, walletAddress, busy, email.state, oauth, email, logout, getAccessToken, privyError, wallets]);
 
   return <PrivyAuthContext.Provider value={value}>{children}</PrivyAuthContext.Provider>;
 }

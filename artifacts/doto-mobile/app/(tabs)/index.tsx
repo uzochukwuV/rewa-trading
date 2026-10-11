@@ -149,7 +149,11 @@ export default function HomeScreen() {
           ))}
         </View>
 
-        <Pressable onPress={() => Alert.alert('Tokenized stocks', 'Explore stock-linked tokens from supported providers. Prices and trading are shown as a demo.')} accessibilityRole="button">
+        <Pressable onPress={() => {
+          const firstMarket = markets[0];
+          if (firstMarket) state.setSelectedSymbol(firstMarket.symbol);
+          router.push({ pathname: '/(tabs)/trade', params: { ...(firstMarket ? { symbol: firstMarket.symbol } : {}), side: 'buy' } });
+        }} accessibilityRole="button">
           <LinearGradient
             colors={[colors.card, colors.promoPurple, colors.background]}
             start={{ x: 0.05, y: 0.5 }}
@@ -159,7 +163,7 @@ export default function HomeScreen() {
             <View style={styles.primeText}>
               <Txt size={21} weight="semibold">Explore tokenized stocks</Txt>
               <Txt size={12} color={colors.mutedForeground} style={{ lineHeight: 19 }}>
-                Discover stock-linked tokens from providers on BNB Chain.
+                Compare stock tokens and request a spot quote on BNB Chain.
               </Txt>
               <View style={[styles.exploreButton, { backgroundColor: colors.foreground }]}>
                 <Txt size={13} weight="semibold" color={colors.background}>Explore stocks</Txt>

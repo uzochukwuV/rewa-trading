@@ -16,7 +16,7 @@ const ICONS: Record<string, keyof typeof Feather.glyphMap> = {
 const LABELS: Record<string, string> = {
   index: 'Home',
   discover: 'Markets',
-  trade: 'Swap',
+  trade: 'Spot',
   portfolio: 'Portfolio',
 };
 
@@ -90,7 +90,7 @@ export default function TabLayout() {
     >
       <Tabs.Screen name="index" options={{ title: 'Home' }} />
       <Tabs.Screen name="discover" options={{ title: 'Markets' }} />
-      <Tabs.Screen name="trade" options={{ title: 'Swap' }} />
+      <Tabs.Screen name="trade" options={{ title: 'Spot' }} />
       <Tabs.Screen name="portfolio" options={{ title: 'Portfolio' }} />
       <Tabs.Screen name="profile" options={{ title: 'Profile', href: null }} />
     </Tabs>

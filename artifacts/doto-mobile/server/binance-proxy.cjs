@@ -4,6 +4,7 @@ const BINANCE_BASE = 'https://web3.binance.com/build';
 const CHAIN_ID = '56';
 const RWA_TOKENS_PATH = '/api/v1/dex/market/rwa/tokens';
 const RWA_PRICE_PATH = '/api/v1/dex/market/rwa/price';
+const RWA_PORTFOLIO_PNL_PATH = '/api/v1/dex/market/portfolio/recent-pnl';
 
 function buildQuery(params) {
   return Object.entries(params)
@@ -39,7 +40,7 @@ async function signedGet(path, params) {
   });
 
   const payload = await response.json().catch(() => null);
-  if (!response.ok || !payload || Number(payload.code) !== 0 || !Array.isArray(payload.data)) {
+  if (!response.ok || !payload || Number(payload.code) !== 0 || payload.data == null) {
     const error = new Error(`Binance RWA request failed (${response.status || 'invalid response'}).`);
     error.statusCode = response.status >= 500 ? 502 : response.status || 502;
     throw error;
@@ -107,6 +108,32 @@ async function getRwaMarkets() {
   return markets;
 }
 
+async function getRwaPortfolio(walletAddress) {
+  if (!/^0x[a-fA-F0-9]{40}$/.test(walletAddress)) {
+    const error = new Error('A valid BNB Smart Chain wallet address is required.');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const pnlList = [];
+  let cursor = '';
+  for (let page = 0; page < 10; page += 1) {
+    const data = await signedGet(RWA_PORTFOLIO_PNL_PATH, {
+      binanceChainId: CHAIN_ID,
+      walletAddress: walletAddress.toLowerCase(),
+      cursor,
+      limit: 100,
+    });
+    if (!data || !Array.isArray(data.pnlList)) {
+      throw new Error('Binance returned an invalid portfolio response.');
+    }
+    pnlList.push(...data.pnlList);
+    cursor = String(data.cursor || '');
+    if (!cursor) break;
+  }
+  return pnlList;
+}
+
 function sendJson(response, statusCode, payload) {
   response.writeHead(statusCode, {
     'content-type': 'application/json; charset=utf-8',
@@ -118,13 +145,27 @@ function sendJson(response, statusCode, payload) {
 
 async function handleBinanceRequest(request, response, routedPath) {
   const requestUrl = new URL(routedPath || request.url || '/', 'http://localhost');
-  if (requestUrl.pathname !== '/api/binance/rwa/markets') return false;
+  const isMarketsRoute = requestUrl.pathname === '/api/binance/rwa/markets';
+  const isPortfolioRoute = requestUrl.pathname === '/api/binance/rwa/portfolio';
+  if (!isMarketsRoute && !isPortfolioRoute) return false;
   if (request.method !== 'GET') {
     sendJson(response, 405, { error: 'Method not allowed.' });
     return true;
   }
 
   try {
+    if (isPortfolioRoute) {
+      const walletAddress = requestUrl.searchParams.get('walletAddress') || '';
+      const portfolio = await getRwaPortfolio(walletAddress);
+      sendJson(response, 200, {
+        source: 'binance',
+        walletAddress: walletAddress.toLowerCase(),
+        positions: portfolio,
+        updatedAt: new Date().toISOString(),
+      });
+      return true;
+    }
+
     const markets = await getRwaMarkets();
     sendJson(response, 200, { source: 'binance', markets, updatedAt: new Date().toISOString() });
   } catch (error) {

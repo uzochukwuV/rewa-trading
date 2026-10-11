@@ -77,13 +77,9 @@ export default function WelcomeScreen() {
       router.replace('/(tabs)');
       return;
     }
-    if (!auth.configured && session.hasOnboarded) {
-      router.replace('/(tabs)');
-      return;
-    }
     const timer = setTimeout(() => setFlow('welcome'), 850);
     return () => clearTimeout(timer);
-  }, [session.ready, session.hasOnboarded, auth.configured, auth.ready, auth.authenticated, router]);
+  }, [session.ready, auth.configured, auth.ready, auth.authenticated, router]);
 
   const runAuth = async (action: () => Promise<void>) => {
     setError(null);
@@ -150,7 +146,7 @@ export default function WelcomeScreen() {
               style={[styles.contactInput, { color: colors.foreground, backgroundColor: colors.card, borderColor: colors.border }]}
             />
           )}
-          {error ? <Txt size={13} color={colors.negative}>{error}</Txt> : null}
+          {error ? <Txt size={13} color={colors.destructive}>{error}</Txt> : null}
           <PrimaryButton
             title={pending ? 'Please wait…' : codeSent ? 'Verify and sign in' : 'Send sign-in code'}
             disabled={pending || auth.busy}
@@ -164,7 +160,7 @@ export default function WelcomeScreen() {
         <ScrollView contentContainerStyle={styles.welcomePage} showsVerticalScrollIndicator={false}>
           <View style={styles.welcomeTop}>
             <Brand />
-            <DemoBadge label={auth.configured ? 'PRIVY AUTH' : 'PREVIEW MODE'} />
+            <DemoBadge label={auth.supported ? 'PRIVY AUTH' : 'SETUP REQUIRED'} />
           </View>
           <OnboardingChart />
           <View style={styles.welcomeCopy}>
@@ -174,7 +170,7 @@ export default function WelcomeScreen() {
             </Txt>
           </View>
           <View style={styles.authActions}>
-            {auth.configured ? (
+            {auth.supported ? (
               <>
                 <PrimaryButton title={pending ? 'Connecting…' : 'Continue with Google'} icon="globe" variant="white" disabled={pending || auth.busy} onPress={() => void runAuth(auth.loginWithGoogle)} />
                 <PrimaryButton title="Continue with Apple" icon="smartphone" variant="dark" disabled={pending || auth.busy} onPress={() => void runAuth(auth.loginWithApple)} />
@@ -184,16 +180,15 @@ export default function WelcomeScreen() {
                   <View style={[styles.divider, { backgroundColor: colors.border }]} />
                 </View>
                 <PrimaryButton title="Continue with email" icon="mail" variant="outline" disabled={pending || auth.busy} onPress={() => { setEmail(''); setCode(''); setCodeSent(false); setError(null); setFlow('email'); }} />
-                {error ? <Txt size={13} color={colors.negative} style={styles.centerText}>{error}</Txt> : null}
+                {error ? <Txt size={13} color={colors.destructive} style={styles.centerText}>{error}</Txt> : null}
                 <Txt size={11} color={colors.mutedForeground} style={styles.centerText}>Sign-in is secured by Privy. Your embedded wallet is created after login.</Txt>
               </>
             ) : (
-              <>
-                <PrimaryButton title="Continue in preview mode" icon="eye" variant="white" onPress={() => session.finishOnboarding('Preview user')} />
-                <Txt size={11} color={colors.mutedForeground} style={styles.centerText}>
-                  Privy is not configured. Preview uses sample account data; no real wallet or orders are available.
-                </Txt>
-              </>
+              <Txt size={13} color={colors.destructive} style={styles.centerText}>
+                {auth.configured
+                  ? 'Privy sign-in requires the native Android or iOS app. Open a native build to sign in.'
+                  : 'Privy sign-in is unavailable. Configure EXPO_PUBLIC_PRIVY_APP_ID and EXPO_PUBLIC_PRIVY_CLIENT_ID, then rebuild the app.'}
+              </Txt>
             )}
             <Txt size={11} color={colors.mutedForeground} style={styles.legalText}>
               By continuing, you agree to the <Txt size={11} color={colors.foreground}>Risk Disclosure</Txt> and <Txt size={11} color={colors.foreground}>Terms of Service</Txt>.

@@ -1,0 +1,113 @@
+name: Build Android APK
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-apk-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build Doto Trading app APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      EXPO_PUBLIC_PRIVY_APP_ID: ${{ secrets.EXPO_PUBLIC_PRIVY_APP_ID }}
+      EXPO_PUBLIC_PRIVY_CLIENT_ID: ${{ secrets.EXPO_PUBLIC_PRIVY_CLIENT_ID }}
+      EXPO_PUBLIC_BINANCE_API_URL: ${{ vars.EXPO_PUBLIC_BINANCE_API_URL || 'https://cushy-pavement-untreated.ngrok-free.dev' }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.26.1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+
+      - name: Install workspace dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate Android build settings
+        working-directory: artifacts/doto-mobile
+        shell: bash
+        run: |
+          missing=()
+          for name in EXPO_PUBLIC_PRIVY_APP_ID EXPO_PUBLIC_PRIVY_CLIENT_ID EXPO_PUBLIC_BINANCE_API_URL; do
+            if [[ -z "${!name}" ]]; then
+              missing+=("$name")
+            fi
+          done
+
+          if (( ${#missing[@]} > 0 )); then
+            printf '::error::Missing required GitHub Actions values: %s\n' "${missing[*]}"
+            echo 'Add Privy identifiers under Settings > Secrets and variables > Actions > Repository secrets.'
+            echo 'Add EXPO_PUBLIC_BINANCE_API_URL under Settings > Secrets and variables > Actions > Repository variables.'
+            exit 1
+          fi
+
+          node -e "const value = process.env.EXPO_PUBLIC_BINANCE_API_URL; const url = new URL(value); if (url.protocol !== 'https:') { console.error('EXPO_PUBLIC_BINANCE_API_URL must use HTTPS'); process.exit(1); }"
+          echo 'Privy app ID: configured'
+          echo 'Privy client ID: configured'
+          node -e "console.log('Android package: ' + require('./app.json').expo.android.package)"
+          echo 'Ensure the Privy mobile client allows Android app identifier com.doto.mobile.'
+
+      - name: Generate Android project
+        working-directory: artifacts/doto-mobile
+        run: pnpm exec expo prebuild --platform android --no-install --non-interactive
+
+      - name: Build release APK
+        working-directory: artifacts/doto-mobile/android
+        run: ./gradlew --no-daemon assembleRelease
+
+      - name: Print APK signing certificate
+        working-directory: artifacts/doto-mobile/android
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          APK="$(find app/build/outputs/apk/release -maxdepth 1 -name '*.apk' -print -quit)"
+          if [[ -z "$APK" ]]; then
+            echo '::error::Release APK not found'
+            exit 1
+          fi
+
+          APKSIGNER="$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -n 1)"
+          if [[ -z "$APKSIGNER" ]]; then
+            echo '::error::apksigner not found'
+            exit 1
+          fi
+
+          echo "APK: $APK"
+          "$APKSIGNER" verify --print-certs "$APK"
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: doto-mobile-android-${{ github.sha }}
+          path: artifacts/doto-mobile/android/app/build/outputs/apk/release/*.apk
+          if-no-files-found: error
+          retention-days: 14

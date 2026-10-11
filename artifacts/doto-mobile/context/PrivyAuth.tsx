@@ -1,4 +1,5 @@
 import React, { createContext, ReactNode, useContext, useMemo } from 'react';
+import { Platform } from 'react-native';
 import { PrivyProvider, useEmbeddedEthereumWallet, useLoginWithEmail, useLoginWithOAuth, usePrivy } from '@privy-io/expo';
 import type { Chain } from '@privy-io/expo';
 
@@ -19,6 +20,7 @@ const bnbSmartChain = {
 
 interface PrivyAuthValue {
   configured: boolean;
+  supported: boolean;
   ready: boolean;
   authenticated: boolean;
   userId: string | null;
@@ -36,6 +38,7 @@ interface PrivyAuthValue {
 
 const emptyAuth: PrivyAuthValue = {
   configured: false,
+  supported: false,
   ready: true,
   authenticated: false,
   userId: null,
@@ -64,6 +67,7 @@ function PrivyAuthBridge({ children }: { children: ReactNode }) {
 
   const value = useMemo<PrivyAuthValue>(() => ({
     configured: true,
+    supported: true,
     ready: isReady,
     authenticated: isReady && Boolean(user),
     userId: isReady ? user?.id ?? null : null,
@@ -83,8 +87,12 @@ function PrivyAuthBridge({ children }: { children: ReactNode }) {
 }
 
 export function PrivyAuthProvider({ children }: { children: ReactNode }) {
-  if (!isConfigured) {
-    return <PrivyAuthContext.Provider value={emptyAuth}>{children}</PrivyAuthContext.Provider>;
+  if (!isConfigured || Platform.OS === 'web') {
+    const unavailableAuth: PrivyAuthValue = {
+      ...emptyAuth,
+      configured: isConfigured,
+    };
+    return <PrivyAuthContext.Provider value={unavailableAuth}>{children}</PrivyAuthContext.Provider>;
   }
 
   return (

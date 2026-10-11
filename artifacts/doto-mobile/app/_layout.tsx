@@ -30,9 +30,15 @@ function RootLayoutNav() {
   const segments = useSegments();
 
   useEffect(() => {
-    if (!auth.configured || !auth.ready || auth.authenticated) return;
-    if (segments.length > 0 && segments[0] !== 'index') router.replace('/');
-  }, [auth.configured, auth.ready, auth.authenticated, segments, router]);
+    if (!auth.ready) return;
+
+    const isProtectedRoute = segments[0] === '(tabs)' || segments[0] === 'asset';
+    if (!auth.authenticated && isProtectedRoute) {
+      router.replace('/');
+    } else if (auth.authenticated && !isProtectedRoute) {
+      router.replace('/(tabs)');
+    }
+  }, [auth.ready, auth.authenticated, segments, router]);
 
   return (
     <Stack screenOptions={{ headerBackTitle: 'Back' }}>

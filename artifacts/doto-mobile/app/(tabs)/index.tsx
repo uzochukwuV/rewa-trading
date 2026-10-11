@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import React from 'react';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import * as Clipboard from 'expo-clipboard';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useAppState } from '@/context/AppState';
 import { usePrivyAuth } from '@/context/PrivyAuth';
 import { money } from '@/data/market';
+import { useWalletStablecoins } from '@/hooks/useWalletStablecoins';
 import { useMarketData } from '@/context/MarketData';
 import { useColors } from '@/hooks/useColors';
 import {
@@ -16,90 +18,10 @@ import {
   MiniChart,
   Page,
   Panel,
-  PrimaryButton,
   PromoArt,
   SectionHeading,
   Txt,
 } from '@/components/ui';
-
-type WalletAction = 'add' | 'withdraw' | 'details' | null;
-
-function WalletSheet({
-  action,
-  balance,
-  onClose,
-  onAdd,
-  onWithdraw,
-}: {
-  action: WalletAction;
-  balance: number;
-  onClose: () => void;
-  onAdd: (amount: number) => void;
-  onWithdraw: (amount: number) => boolean;
-}) {
-  const colors = useColors();
-  const [amount, setAmount] = useState('250');
-  if (!action) return null;
-  const title = action === 'add' ? 'Add money' : action === 'withdraw' ? 'Withdraw' : 'Account details';
-  return (
-    <View style={styles.sheetOverlay}>
-      <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Close sheet" />
-      <View style={[styles.sheet, { backgroundColor: colors.card, borderColor: colors.border }]}>
-        <View style={[styles.sheetHandle, { backgroundColor: colors.mutedForeground }]} />
-        <View style={styles.sheetHeader}>
-          <Txt size={20} weight="semibold">{title}</Txt>
-          <Pressable onPress={onClose} accessibilityLabel="Close"><Feather name="x" size={21} color={colors.mutedForeground} /></Pressable>
-        </View>
-        {action === 'details' ? (
-          <View style={{ gap: 13 }}>
-            <View style={styles.detailRow}><Txt size={13} color={colors.mutedForeground}>Account</Txt><Txt size={13} weight="medium">Demo • Tokenized stocks</Txt></View>
-            <View style={styles.detailRow}><Txt size={13} color={colors.mutedForeground}>Buying power</Txt><Txt size={13} weight="medium">{money(balance)}</Txt></View>
-            <View style={styles.detailRow}><Txt size={13} color={colors.mutedForeground}>Open positions</Txt><Txt size={13} weight="medium">0</Txt></View>
-            <Txt size={12} color={colors.mutedForeground}>All account values and activity are local sample data.</Txt>
-          </View>
-        ) : (
-          <>
-            <Txt size={13} color={colors.mutedForeground}>Demo buying power: {money(balance)}</Txt>
-            <View style={[styles.amountInput, { backgroundColor: colors.background, borderColor: colors.border }]}>
-              <Txt size={17} weight="semibold">$</Txt>
-              <View style={{ flex: 1 }}>
-                <Txt size={11} color={colors.mutedForeground}>Amount in USD</Txt>
-                <View style={styles.amountLine}>
-                  <Txt size={20} weight="semibold">{amount || '0'}</Txt>
-                  <View style={{ flexDirection: 'row', gap: 8 }}>
-                    {[100, 250, 500].map((value) => (
-                      <Pressable key={value} onPress={() => setAmount(String(value))} style={[styles.amountChip, { backgroundColor: colors.secondary }]}>
-                        <Txt size={11} weight="medium">${value}</Txt>
-                      </Pressable>
-                    ))}
-                  </View>
-                </View>
-              </View>
-            </View>
-            <Txt size={11} color={colors.mutedForeground}>No money moves. This only changes the local demo balance.</Txt>
-            <PrimaryButton
-              title={action === 'add' ? 'Add demo funds' : 'Withdraw demo funds'}
-              onPress={() => {
-                const value = Number(amount);
-                if (!Number.isFinite(value) || value <= 0) {
-                  Alert.alert('Enter an amount', 'Use a number greater than zero.');
-                  return;
-                }
-                if (action === 'add') onAdd(value);
-                else if (!onWithdraw(value)) {
-                  Alert.alert('Not enough demo funds', 'Choose an amount no greater than the demo wallet balance.');
-                  return;
-                }
-                onClose();
-              }}
-            />
-          </>
-        )}
-        {action === 'details' ? <PrimaryButton title="Done" onPress={onClose} /> : null}
-      </View>
-    </View>
-  );
-}
 
 export default function HomeScreen() {
   const colors = useColors();
@@ -107,7 +29,7 @@ export default function HomeScreen() {
   const state = useAppState();
   const auth = usePrivyAuth();
   const { markets, source } = useMarketData();
-  const [action, setAction] = useState<WalletAction>(null);
+  const { balanceUsd, loading: balanceLoading, error: balanceError } = useWalletStablecoins();
   const goToMarket = (symbol: string) => {
     state.setSelectedSymbol(symbol);
     router.push({ pathname: '/asset/[symbol]', params: { symbol } });
@@ -129,24 +51,15 @@ export default function HomeScreen() {
           <DemoBadge label={source === 'binance' ? 'BINANCE DATA' : 'PRACTICE'} />
         </View>
         <View style={styles.balanceBlock}>
-          <Txt size={13} color={colors.mutedForeground}>Account balance</Txt>
-          <Txt size={34} weight="semibold">{money(state.walletBalance)}</Txt>
-          <Txt size={12} color={colors.mutedForeground}>Available buying power for simulated stock trades</Txt>
-        </View>
-
-        <View style={styles.quickActions}>
-          {[
-            { icon: 'upload' as const, title: 'Add money', action: 'add' as const, active: true },
-            { icon: 'download' as const, title: 'Withdraw', action: 'withdraw' as const, active: false },
-            { icon: 'more-vertical' as const, title: 'Details', action: 'details' as const, active: false },
-          ].map((item) => (
-            <Pressable key={item.title} onPress={() => setAction(item.action)} style={styles.quickAction} accessibilityRole="button">
-              <View style={[styles.actionCircle, { backgroundColor: item.active ? colors.foreground : colors.secondary }]}>
-                <Feather name={item.icon} size={21} color={item.active ? colors.background : colors.foreground} />
-              </View>
-              <Txt size={13} color={item.active ? colors.foreground : colors.mutedForeground}>{item.title}</Txt>
+          <Txt size={13} color={colors.mutedForeground}>USDC + USDT balance</Txt>
+          <Txt size={34} weight="semibold">{balanceLoading && balanceUsd === null ? '…' : balanceUsd === null ? '—' : money(balanceUsd)}</Txt>
+          {auth.walletAddress ? (
+            <Pressable onPress={() => { void Clipboard.setStringAsync(auth.walletAddress!); }} style={styles.addressRow} accessibilityRole="button" accessibilityLabel="Copy Privy wallet address">
+              <Txt size={12} color={colors.mutedForeground}>{`${auth.walletAddress.slice(0, 6)}…${auth.walletAddress.slice(-4)}`}</Txt>
+              <Feather name="copy" size={13} color={colors.mutedForeground} />
             </Pressable>
-          ))}
+          ) : <Txt size={12} color={colors.mutedForeground}>{auth.authenticated ? 'Preparing your Privy wallet…' : 'Sign in to see your wallet balance'}</Txt>}
+          {balanceError ? <Txt size={11} color={colors.destructive}>{balanceError}</Txt> : null}
         </View>
 
         <Pressable onPress={() => {
@@ -209,13 +122,6 @@ export default function HomeScreen() {
         </Panel>
         <Txt size={11} color={colors.mutedForeground}>{source === 'binance' ? 'Indicative Binance RWA data · Not financial advice' : 'Illustrative sample prices · Not financial advice'}</Txt>
       </Page>
-      <WalletSheet
-        action={action}
-        balance={state.walletBalance}
-        onClose={() => setAction(null)}
-        onAdd={state.addFunds}
-        onWithdraw={state.withdrawFunds}
-      />
     </View>
   );
 }
@@ -226,9 +132,7 @@ const styles = StyleSheet.create({
   demoChip: { borderRadius: 10, paddingHorizontal: 8, paddingVertical: 4 },
   statusLine: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: -5 },
   balanceBlock: { alignItems: 'center', gap: 5, paddingVertical: 3 },
-  quickActions: { flexDirection: 'row', justifyContent: 'space-around', marginTop: -2, marginBottom: 1 },
-  quickAction: { alignItems: 'center', gap: 8, minWidth: 82 },
-  actionCircle: { width: 58, height: 58, borderRadius: 32, alignItems: 'center', justifyContent: 'center' },
+  addressRow: { flexDirection: 'row', alignItems: 'center', gap: 7, paddingVertical: 3 },
   primeCard: { minHeight: 174, borderRadius: 26, padding: 18, flexDirection: 'row', alignItems: 'center', overflow: 'hidden', borderWidth: 1 },
   primeText: { flex: 1, gap: 8, zIndex: 1 },
   exploreButton: { alignSelf: 'flex-start', borderRadius: 24, paddingVertical: 10, paddingHorizontal: 20, marginTop: 4 },
@@ -239,12 +143,4 @@ const styles = StyleSheet.create({
   ideaCard: { width: 286, padding: 16, borderWidth: 1, borderRadius: 22, gap: 13 },
   ideaMeta: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   ideaFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  sheetOverlay: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(0,0,0,0.62)', justifyContent: 'flex-end', zIndex: 10 },
-  sheet: { paddingHorizontal: 22, paddingTop: 12, paddingBottom: 30, borderTopLeftRadius: 26, borderTopRightRadius: 26, borderTopWidth: 1, gap: 17 },
-  sheetHandle: { width: 42, height: 4, borderRadius: 3, alignSelf: 'center' },
-  sheetHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  detailRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  amountInput: { borderWidth: 1, borderRadius: 18, padding: 14, flexDirection: 'row', gap: 10, alignItems: 'center' },
-  amountLine: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginTop: 6 },
-  amountChip: { paddingVertical: 6, paddingHorizontal: 8, borderRadius: 11 },
 });

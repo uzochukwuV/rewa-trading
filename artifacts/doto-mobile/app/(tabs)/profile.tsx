@@ -5,6 +5,7 @@ import { useRouter } from 'expo-router';
 import { useAppState } from '@/context/AppState';
 import { usePrivyAuth } from '@/context/PrivyAuth';
 import { money } from '@/data/market';
+import { useWalletStablecoins } from '@/hooks/useWalletStablecoins';
 import { useColors } from '@/hooks/useColors';
 import { DemoBadge, Page, Panel, PrimaryButton, SectionHeading, Txt } from '@/components/ui';
 
@@ -34,6 +35,7 @@ export default function ProfileScreen() {
   const router = useRouter();
   const state = useAppState();
   const auth = usePrivyAuth();
+  const { balanceUsd, loading: balanceLoading, error: balanceError } = useWalletStablecoins();
   const showInfo = (title: string, detail: string) => Alert.alert(title, detail);
   const signOut = () => Alert.alert(auth.authenticated ? 'Sign out?' : 'Leave preview mode?', 'Sample trades and preferences stay saved on this device.', [
     { text: 'Stay here', style: 'cancel' },
@@ -66,7 +68,7 @@ export default function ProfileScreen() {
       </Panel>
       <View style={styles.statGrid}>
         {[
-          { label: 'Wallet', value: money(state.walletBalance) },
+          { label: 'Wallet', value: balanceLoading && balanceUsd === null ? '…' : auth.walletAddress && balanceUsd !== null ? money(balanceUsd) : '—' },
           { label: 'Favorites', value: String(state.favorites.length) },
           { label: 'Trades', value: String(state.positions.length) },
         ].map((item) => (
@@ -81,10 +83,7 @@ export default function ProfileScreen() {
         <ProfileItem icon="credit-card" title={auth.walletReady ? 'BNB Smart Chain wallet' : 'Wallet status'} subtitle={auth.authenticated ? (auth.walletAddress ?? auth.error ?? 'Preparing your embedded wallet…') : 'No real wallet in preview mode'} onPress={() => showInfo('Embedded wallet', auth.walletAddress ? `${auth.walletAddress}\nNetwork: BNB Smart Chain (chain ID 56)` : auth.authenticated ? auth.error ?? 'Privy is preparing the embedded BNB Smart Chain wallet.' : 'Configure Privy to create an embedded wallet after sign-in.')} />
         <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: colors.border }} />
         <ProfileItem icon="user" title="Identity" subtitle={auth.authenticated ? `Privy user ${auth.userId ?? ''}` : 'Local preview identity'} onPress={() => showInfo('Identity', auth.authenticated ? 'Your app session is managed by Privy.' : 'This identity is local sample data.')} />
-        {!auth.authenticated ? <>
-          <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: colors.border }} />
-          <ProfileItem icon="dollar-sign" title="Sample buying power" subtitle={money(state.walletBalance)} onPress={() => showInfo('Sample balance', 'This preview balance is local sample data and is not connected to a wallet.')} />
-        </> : null}
+        {auth.authenticated && balanceError ? <Txt size={11} color={colors.destructive}>{balanceError}</Txt> : null}
       </Panel>
       <SectionHeading title="Help and information" />
       <Panel style={{ paddingVertical: 2, paddingHorizontal: 13, gap: 0 }}>

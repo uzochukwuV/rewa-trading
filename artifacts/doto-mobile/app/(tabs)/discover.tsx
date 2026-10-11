@@ -3,31 +3,30 @@ import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useAppState } from '@/context/AppState';
-import { MARKET_DATA } from '@/data/market';
+import { useMarketData } from '@/context/MarketData';
 import { useColors } from '@/hooks/useColors';
 import { DemoBadge, MarketRow, Page, Panel, SectionHeading, Txt } from '@/components/ui';
 
-const FILTERS = ['All', 'Favorites', 'Crypto', 'Forex', 'Commodities', 'Indices'] as const;
+const FILTERS = ['All', 'Favorites', 'bStock', 'Ondo'] as const;
 type Filter = (typeof FILTERS)[number];
 
 export default function DiscoverScreen() {
   const colors = useColors();
   const router = useRouter();
   const state = useAppState();
+  const { markets: allMarkets, source } = useMarketData();
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<Filter>('All');
 
-  const markets = useMemo(() => MARKET_DATA.filter((market) => {
+  const markets = useMemo(() => allMarkets.filter((market) => {
     const matchesQuery = `${market.name} ${market.symbol}`.toLowerCase().includes(query.trim().toLowerCase());
     const matchesFilter =
       filter === 'All' ||
       (filter === 'Favorites' && state.favorites.includes(market.symbol)) ||
-      (filter === 'Crypto' && market.category === 'Crypto') ||
-      (filter === 'Forex' && market.category === 'Forex') ||
-      (filter === 'Commodities' && market.category === 'Commodity') ||
-      (filter === 'Indices' && market.category === 'Index');
+      (filter === 'bStock' && market.provider === 'bStock') ||
+      (filter === 'Ondo' && market.provider === 'Ondo');
     return matchesQuery && matchesFilter;
-  }), [query, filter, state.favorites]);
+  }), [allMarkets, query, filter, state.favorites]);
 
   const openMarket = (symbol: string) => {
     state.setSelectedSymbol(symbol);
@@ -37,8 +36,8 @@ export default function DiscoverScreen() {
   return (
     <Page>
       <View style={styles.header}>
-        <View><Txt size={25} weight="semibold">Discover</Txt><Txt size={13} color={colors.mutedForeground}>Explore simulated markets</Txt></View>
-        <DemoBadge label="DEMO" />
+        <View><Txt size={25} weight="semibold">Markets</Txt><Txt size={13} color={colors.mutedForeground}>Browse tokenized stocks</Txt></View>
+        <DemoBadge label={source === 'binance' ? 'BINANCE DATA' : 'DEMO'} />
       </View>
       <View style={[styles.search, { backgroundColor: colors.card, borderColor: colors.border }]}>
         <Feather name="search" size={19} color={colors.mutedForeground} />
@@ -46,7 +45,7 @@ export default function DiscoverScreen() {
           testID="market-search"
           value={query}
           onChangeText={setQuery}
-          placeholder="Search markets"
+          placeholder="Search stocks or tickers"
           placeholderTextColor={colors.mutedForeground}
           returnKeyType="search"
           style={[styles.searchInput, { color: colors.foreground }]}
@@ -71,12 +70,12 @@ export default function DiscoverScreen() {
       <Panel style={styles.marketSummary}>
         <View style={[styles.summaryIcon, { backgroundColor: `${colors.primary}20` }]}><Feather name="activity" size={18} color={colors.primary} /></View>
         <View style={{ flex: 1, gap: 4 }}>
-          <Txt size={14} weight="semibold">Markets are moving</Txt>
-          <Txt size={12} color={colors.mutedForeground}>Prices and changes are illustrative only.</Txt>
+          <Txt size={14} weight="semibold">Stock tokens on BNB Chain</Txt>
+          <Txt size={12} color={colors.mutedForeground}>Compare indicative prices across providers.</Txt>
         </View>
         <Feather name="arrow-up-right" size={18} color={colors.mutedForeground} />
       </Panel>
-      <SectionHeading title={filter === 'Favorites' ? 'Your favorites' : 'All markets'} action={`${markets.length} assets`} />
+      <SectionHeading title={filter === 'Favorites' ? 'Your favorites' : 'Tokenized stocks'} action={`${markets.length} listings`} />
       <Panel style={styles.marketList}>
         {markets.length ? markets.map((market, index) => (
           <React.Fragment key={market.symbol}>
@@ -93,12 +92,12 @@ export default function DiscoverScreen() {
             <Feather name={filter === 'Favorites' ? 'star' : 'search'} size={26} color={colors.mutedForeground} />
             <Txt size={15} weight="semibold">{filter === 'Favorites' ? 'No saved markets yet' : 'No matches found'}</Txt>
             <Txt size={12} color={colors.mutedForeground} style={{ textAlign: 'center' }}>
-              {filter === 'Favorites' ? 'Tap the star beside a market to save it here.' : 'Try a different search or market category.'}
+              {filter === 'Favorites' ? 'Tap the star beside a stock to save it here.' : 'Try another ticker or provider filter.'}
             </Txt>
           </View>
         )}
       </Panel>
-      <Txt size={11} color={colors.mutedForeground}>Demo prices only · Trading involves risk</Txt>
+      <Txt size={11} color={colors.mutedForeground}>{source === 'binance' ? 'Binance indicative data · Tokenized stocks carry risk' : 'Indicative sample prices · Tokenized stocks carry risk'}</Txt>
     </Page>
   );
 }

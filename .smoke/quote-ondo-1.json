@@ -1,0 +1,11 @@
+{
+  "status": 200,
+  "latencyMs": 398,
+  "payload": {
+    "code": 40375,
+    "msg": "Minimum order amount is 5 USD.",
+    "data": null,
+    "timestamp": 1791683362334,
+    "success": false
+  }
+}

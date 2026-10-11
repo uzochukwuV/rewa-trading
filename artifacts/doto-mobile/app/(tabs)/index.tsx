@@ -4,7 +4,9 @@ import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useAppState } from '@/context/AppState';
-import { MARKET_DATA, money } from '@/data/market';
+import { usePrivyAuth } from '@/context/PrivyAuth';
+import { money } from '@/data/market';
+import { useMarketData } from '@/context/MarketData';
 import { useColors } from '@/hooks/useColors';
 import {
   AssetMark,
@@ -50,14 +52,14 @@ function WalletSheet({
         </View>
         {action === 'details' ? (
           <View style={{ gap: 13 }}>
-            <View style={styles.detailRow}><Txt size={13} color={colors.mutedForeground}>Account</Txt><Txt size={13} weight="medium">Demo • MT5 Standard</Txt></View>
-            <View style={styles.detailRow}><Txt size={13} color={colors.mutedForeground}>Available funds</Txt><Txt size={13} weight="medium">{money(balance)}</Txt></View>
-            <View style={styles.detailRow}><Txt size={13} color={colors.mutedForeground}>Open trades</Txt><Txt size={13} weight="medium">0</Txt></View>
+            <View style={styles.detailRow}><Txt size={13} color={colors.mutedForeground}>Account</Txt><Txt size={13} weight="medium">Demo • Tokenized stocks</Txt></View>
+            <View style={styles.detailRow}><Txt size={13} color={colors.mutedForeground}>Buying power</Txt><Txt size={13} weight="medium">{money(balance)}</Txt></View>
+            <View style={styles.detailRow}><Txt size={13} color={colors.mutedForeground}>Open positions</Txt><Txt size={13} weight="medium">0</Txt></View>
             <Txt size={12} color={colors.mutedForeground}>All account values and activity are local sample data.</Txt>
           </View>
         ) : (
           <>
-            <Txt size={13} color={colors.mutedForeground}>Demo wallet balance: {money(balance)}</Txt>
+            <Txt size={13} color={colors.mutedForeground}>Demo buying power: {money(balance)}</Txt>
             <View style={[styles.amountInput, { backgroundColor: colors.background, borderColor: colors.border }]}>
               <Txt size={17} weight="semibold">$</Txt>
               <View style={{ flex: 1 }}>
@@ -103,6 +105,8 @@ export default function HomeScreen() {
   const colors = useColors();
   const router = useRouter();
   const state = useAppState();
+  const auth = usePrivyAuth();
+  const { markets, source } = useMarketData();
   const [action, setAction] = useState<WalletAction>(null);
   const goToMarket = (symbol: string) => {
     state.setSelectedSymbol(symbol);
@@ -114,20 +118,20 @@ export default function HomeScreen() {
       <Page>
         <View style={styles.homeHeader}>
           <Brand small />
-          <Pressable onPress={() => Alert.alert('Demo account', 'This app is using sample account data only.')} style={[styles.accountPill, { backgroundColor: colors.card }]}>
-            <View style={[styles.demoChip, { backgroundColor: colors.secondary }]}><Txt size={11} weight="semibold" color={colors.primary}>Demo</Txt></View>
-            <Txt size={13} weight="medium">Demo account</Txt>
+          <Pressable onPress={() => router.push('/(tabs)/profile')} style={[styles.accountPill, { backgroundColor: colors.card }]} accessibilityRole="button" accessibilityLabel="Open account and wallet settings">
+            <View style={[styles.demoChip, { backgroundColor: colors.secondary }]}><Txt size={11} weight="semibold" color={colors.primary}>{auth.walletReady ? 'BNB' : auth.authenticated ? 'WALLET' : 'DEMO'}</Txt></View>
+            <Txt size={13} weight="medium">{auth.authenticated ? 'Account' : 'Preview account'}</Txt>
             <Feather name="chevron-down" size={15} color={colors.mutedForeground} />
           </Pressable>
         </View>
         <View style={styles.statusLine}>
-          <Txt size={12} color={colors.mutedForeground}>MT5 • Standard</Txt>
-          <DemoBadge label="PRACTICE" />
+          <Txt size={12} color={colors.mutedForeground}>Tokenized stocks • {source === 'binance' ? 'BNB Chain' : 'Demo'}</Txt>
+          <DemoBadge label={source === 'binance' ? 'BINANCE DATA' : 'PRACTICE'} />
         </View>
         <View style={styles.balanceBlock}>
           <Txt size={13} color={colors.mutedForeground}>Account balance</Txt>
           <Txt size={34} weight="semibold">{money(state.walletBalance)}</Txt>
-          <Txt size={12} color={colors.mutedForeground}>Available for simulated trades</Txt>
+          <Txt size={12} color={colors.mutedForeground}>Available buying power for simulated stock trades</Txt>
         </View>
 
         <View style={styles.quickActions}>
@@ -145,7 +149,7 @@ export default function HomeScreen() {
           ))}
         </View>
 
-        <Pressable onPress={() => Alert.alert('Doto Prime', 'Prime benefits are shown as a visual demo. No plan or subscription is available.')} accessibilityRole="button">
+        <Pressable onPress={() => Alert.alert('Tokenized stocks', 'Explore stock-linked tokens from supported providers. Prices and trading are shown as a demo.')} accessibilityRole="button">
           <LinearGradient
             colors={[colors.card, colors.promoPurple, colors.background]}
             start={{ x: 0.05, y: 0.5 }}
@@ -153,12 +157,12 @@ export default function HomeScreen() {
             style={[styles.primeCard, { borderColor: colors.promoLilac }]}
           >
             <View style={styles.primeText}>
-              <Txt size={21} weight="semibold">Join Doto Prime</Txt>
+              <Txt size={21} weight="semibold">Explore tokenized stocks</Txt>
               <Txt size={12} color={colors.mutedForeground} style={{ lineHeight: 19 }}>
-                Get premium insights, support and a raw spread account.
+                Discover stock-linked tokens from providers on BNB Chain.
               </Txt>
               <View style={[styles.exploreButton, { backgroundColor: colors.foreground }]}>
-                <Txt size={13} weight="semibold" color={colors.background}>Explore</Txt>
+                <Txt size={13} weight="semibold" color={colors.background}>Explore stocks</Txt>
               </View>
             </View>
             <PromoArt />
@@ -173,20 +177,20 @@ export default function HomeScreen() {
         <SectionHeading title="AI trading ideas" icon="star" action="See all" onAction={() => router.push('/discover')} />
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.ideaList}>
           {[
-            { market: MARKET_DATA[1], time: '6 min ago', title: 'Gold OTC', copy: 'Gold is holding above support. Watch for a possible continuation.' },
-            { market: MARKET_DATA[2], time: '14 min ago', title: 'Oil Crude', copy: 'Oil is testing a nearby resistance zone in the demo market.' },
+            { market: markets.find((market) => market.ticker === 'NVDA') ?? markets[0], time: 'Market watch', title: 'Nvidia', copy: 'Compare NVDA-linked tokens from bStock and Ondo before placing a demo trade.' },
+            { market: markets.find((market) => market.ticker === 'MSFT') ?? markets[1] ?? markets[0], time: 'Market watch', title: 'Microsoft', copy: 'Review the available Microsoft-linked tokens and their indicative prices.' },
           ].map((idea) => (
             <Pressable key={idea.title} onPress={() => goToMarket(idea.market.symbol)} style={[styles.ideaCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <View style={styles.ideaMeta}><AssetMark market={idea.market} size={42} /><View><Txt size={11} color={colors.mutedForeground}>{idea.time}</Txt><Txt size={15} weight="semibold">{idea.title}</Txt></View></View>
               <Txt size={13} color={colors.mutedForeground} style={{ lineHeight: 20 }}>{idea.copy}</Txt>
-              <View style={styles.ideaFooter}><DemoBadge label="DEMO IDEA" /><Feather name="arrow-up-right" size={18} color={colors.primary} /></View>
+              <View style={styles.ideaFooter}><DemoBadge label="STOCK WATCH" /><Feather name="arrow-up-right" size={18} color={colors.primary} /></View>
             </Pressable>
           ))}
         </ScrollView>
 
         <SectionHeading title="Popular markets" action="View all" onAction={() => router.push('/discover')} />
         <Panel style={{ paddingHorizontal: 14, paddingVertical: 3, gap: 0 }}>
-          {MARKET_DATA.slice(0, 3).map((market, index) => (
+          {markets.slice(0, 3).map((market, index) => (
             <React.Fragment key={market.symbol}>
               <MarketRow
                 market={market}
@@ -199,7 +203,7 @@ export default function HomeScreen() {
             </React.Fragment>
           ))}
         </Panel>
-        <Txt size={11} color={colors.mutedForeground}>Illustrative prices only · Not financial advice</Txt>
+        <Txt size={11} color={colors.mutedForeground}>{source === 'binance' ? 'Indicative Binance RWA data · Not financial advice' : 'Illustrative sample prices · Not financial advice'}</Txt>
       </Page>
       <WalletSheet
         action={action}

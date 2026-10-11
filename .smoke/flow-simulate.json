@@ -1,0 +1,16 @@
+{
+  "status": 200,
+  "latencyMs": 441,
+  "payload": {
+    "code": 0,
+    "msg": "success",
+    "data": {
+      "status": "FAILED",
+      "failReason": "execution reverted: BEP20: transfer amount exceeds allowance",
+      "balanceChanges": [],
+      "allowanceChanges": []
+    },
+    "timestamp": 1791469011760,
+    "success": true
+  }
+}

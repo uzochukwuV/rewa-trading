@@ -223,11 +223,9 @@ export function Field({
 
 export function AssetMark({ market, size = 42 }: { market?: Market; size?: number }) {
   const colors = useColors();
-  const symbol = market?.symbol ?? 'BTCUSD';
-  const markColor = symbol === 'BTCUSD' ? colors.bitcoin :
-    symbol === 'XAUUSD' ? colors.gold :
-      symbol === 'ETHUSD' ? colors.ethereum :
-        symbol === 'EURUSD' ? colors.fxBlue : colors.primary;
+  const markColor = market?.ticker === 'NVDA' ? colors.primary :
+    market?.ticker === 'AAPL' ? colors.fxBlue :
+      market?.ticker === 'TSLA' ? colors.destructive : colors.gold;
   return (
     <View style={[styles.assetMark, { width: size, height: size, borderRadius: size / 2, backgroundColor: `${markColor}20` }]}>
       <Txt size={size * 0.4} weight="bold" color={markColor}>{market?.badge ?? '₿'}</Txt>
@@ -249,7 +247,7 @@ export function MarketRow({
   compact?: boolean;
 }) {
   const colors = useColors();
-  const isUp = market.change >= 0;
+  const isUp = market.referenceChange >= 0;
   return (
     <Pressable
       onPress={onPress}
@@ -258,13 +256,13 @@ export function MarketRow({
     >
       <AssetMark market={market} size={compact ? 38 : 44} />
       <View style={{ flex: 1, gap: 3 }}>
-        <Txt size={14} weight="semibold">{market.name}</Txt>
-        <Txt size={12} color={colors.mutedForeground}>{market.symbol}</Txt>
+        <Txt size={14} weight="semibold">{market.ticker} <Txt size={12} weight="medium" color={colors.mutedForeground}>· {market.provider}</Txt></Txt>
+        <Txt size={12} color={colors.mutedForeground}>{market.name} · {market.symbol}</Txt>
       </View>
       <View style={{ alignItems: 'flex-end', gap: 3 }}>
         <Txt size={13} weight="medium">{money(market.price)}</Txt>
         <Txt size={12} weight="medium" color={isUp ? colors.primary : colors.destructive}>
-          {isUp ? '+' : ''}{market.change.toFixed(2)}%
+          {isUp ? '+' : ''}{market.referenceChange.toFixed(2)}% vs ref
         </Txt>
       </View>
       {onFavorite ? (

@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import {
-  Alert,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -11,12 +10,12 @@ import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Svg, { Path } from 'react-native-svg';
 import { useAppState } from '@/context/AppState';
+import { usePrivyAuth } from '@/context/PrivyAuth';
 import { useColors } from '@/hooks/useColors';
 import { Brand, DemoBadge, MiniChart, PrimaryButton, Txt } from '@/components/ui';
 
-type Flow = 'splash' | 'welcome' | 'email' | 'phone' | 'passcode';
+type Flow = 'splash' | 'welcome' | 'email';
 
 function OnboardingChart() {
   const colors = useColors();
@@ -24,27 +23,32 @@ function OnboardingChart() {
     <View style={styles.illustration}>
       <MiniChart height={218} color={colors.primary} />
       <View style={[styles.coin, { backgroundColor: colors.bitcoin }]}>
-        <Txt size={53} weight="bold" color={colors.foreground}>₿</Txt>
+        <Txt size={53} weight="bold" color={colors.foreground}>$</Txt>
       </View>
       <View style={[styles.upBadge, { backgroundColor: colors.primary }]}>
         <Feather name="arrow-up-right" size={22} color={colors.primaryForeground} />
       </View>
       <View style={[styles.gainBadge, { backgroundColor: colors.primary }]}>
-        <Txt size={22} weight="bold" color={colors.primaryForeground}>+$500</Txt>
+        <Txt size={16} weight="bold" color={colors.primaryForeground}>BNB</Txt>
       </View>
     </View>
   );
 }
 
-function Splash({ analyzing }: { analyzing: boolean }) {
+function Splash({ analyzing, message }: { analyzing: boolean; message?: string }) {
   const colors = useColors();
   return (
     <View style={[styles.splash, { backgroundColor: colors.background }]}>
-      {analyzing ? (
+      {message ? (
+        <>
+          <Brand />
+          <Txt size={13} color={colors.mutedForeground} style={styles.centerText}>{message}</Txt>
+        </>
+      ) : analyzing ? (
         <>
           <View style={[styles.pulseOuter, { borderColor: colors.primary }]} />
           <View style={[styles.pulse, { backgroundColor: colors.primary }]} />
-          <Txt size={18} color={colors.foreground}>Analyzing trends with AI</Txt>
+          <Txt size={15} color={colors.foreground}>{message ?? 'Restoring your secure session…'}</Txt>
         </>
       ) : <Brand />}
     </View>
@@ -55,143 +59,148 @@ export default function WelcomeScreen() {
   const colors = useColors();
   const router = useRouter();
   const session = useAppState();
+  const auth = usePrivyAuth();
   const [flow, setFlow] = useState<Flow>('splash');
-  const [pin, setPin] = useState('');
-  const [contact, setContact] = useState('');
+  const [email, setEmail] = useState('');
+  const [code, setCode] = useState('');
+  const [codeSent, setCodeSent] = useState(false);
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!session.ready) return;
-    if (session.hasOnboarded) {
+    if (auth.configured && !auth.ready) {
+      setFlow('splash');
+      return;
+    }
+    if (auth.configured && auth.authenticated) {
+      router.replace('/(tabs)');
+      return;
+    }
+    if (!auth.configured && session.hasOnboarded) {
       router.replace('/(tabs)');
       return;
     }
     const timer = setTimeout(() => setFlow('welcome'), 850);
     return () => clearTimeout(timer);
-  }, [session.ready, session.hasOnboarded, router]);
+  }, [session.ready, session.hasOnboarded, auth.configured, auth.ready, auth.authenticated, router]);
 
-  const proceedToPasscode = () => {
-    if ((flow === 'email' || flow === 'phone') && !contact.trim()) {
-      Alert.alert('Enter your details', `Add a ${flow === 'email' ? 'sample email address' : 'sample phone number'} to continue.`);
+  const runAuth = async (action: () => Promise<void>) => {
+    setError(null);
+    setPending(true);
+    try {
+      await action();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Unable to sign in. Please try again.');
+    } finally {
+      setPending(false);
+    }
+  };
+
+  const sendEmailCode = () => {
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!normalizedEmail || !normalizedEmail.includes('@')) {
+      setError('Enter a valid email address.');
       return;
     }
-    setFlow('passcode');
+    setEmail(normalizedEmail);
+    void runAuth(async () => {
+      await auth.sendEmailCode(normalizedEmail);
+      setCodeSent(true);
+    });
   };
 
-  const finish = () => session.finishOnboarding('Victor Ezeanor');
-  const addDigit = (digit: string) => {
-    if (pin.length >= 4) return;
-    const next = `${pin}${digit}`;
-    setPin(next);
-    if (next.length === 4) {
-      setTimeout(finish, 180);
-    }
-  };
-
-  if (!session.ready || flow === 'splash') {
-    return <Splash analyzing={session.ready} />;
+  if (!session.ready || (auth.configured && !auth.ready) || flow === 'splash') {
+    return <Splash analyzing={session.ready && (!auth.configured || auth.ready)} message={auth.error ? `Privy could not initialize: ${auth.error}` : undefined} />;
   }
 
   return (
     <SafeAreaView edges={['top', 'bottom']} style={[styles.container, { backgroundColor: colors.background }]}>
-      {flow === 'passcode' ? (
-        <View style={styles.passcodePage}>
-          <Pressable onPress={() => { setFlow('welcome'); setPin(''); }} style={styles.backButton} accessibilityLabel="Back">
+      {flow === 'email' ? (
+        <View style={styles.contactPage}>
+          <Pressable onPress={() => { setFlow('welcome'); setCodeSent(false); setCode(''); setError(null); }} style={styles.backButton} accessibilityLabel="Back">
             <Feather name="arrow-left" size={22} color={colors.foreground} />
           </Pressable>
-          <View style={styles.passcodeHeading}>
-            <Txt size={23} weight="semibold">Create your passcode</Txt>
-            <Txt size={14} color={colors.mutedForeground}>Use any 4 digits for this demo</Txt>
-            <View style={styles.pinDots}>
-              {[0, 1, 2, 3].map((index) => (
-                <View key={index} style={[
-                  styles.pinDot,
-                  { backgroundColor: pin.length > index ? colors.primary : colors.mutedForeground },
-                ]} />
-              ))}
-            </View>
-          </View>
-          <View style={styles.keypad}>
-            {['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'back'].map((key, index) => (
-              <Pressable
-                key={`${key}-${index}`}
-                testID={key ? `key-${key}` : `key-empty-${index}`}
-                onPress={() => key === 'back' ? setPin((value) => value.slice(0, -1)) : key && addDigit(key)}
-                style={styles.key}
-                accessibilityRole={key ? 'button' : undefined}
-                accessibilityLabel={key === 'back' ? 'Delete last digit' : key || undefined}
-              >
-                {key === 'back'
-                  ? <Feather name="delete" size={23} color={colors.foreground} />
-                  : key ? <Txt size={28} weight="medium">{key}</Txt> : null}
-              </Pressable>
-            ))}
-          </View>
-          <Pressable onPress={finish} style={styles.skipButton} accessibilityRole="button">
-            <Txt size={15} weight="medium" color={colors.mutedForeground}>Skip this time</Txt>
-          </Pressable>
-          <DemoBadge label="NO REAL ACCOUNT OR ORDERS" />
+          <Brand small />
+          <Txt size={27} weight="semibold">{codeSent ? 'Check your email' : 'Sign in with email'}</Txt>
+          <Txt size={14} color={colors.mutedForeground}>
+            {codeSent ? `Enter the one-time code sent to ${email}.` : 'We’ll email you a one-time sign-in code.'}
+          </Txt>
+          {!codeSent ? (
+            <TextInput
+              testID="email-input"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoComplete="email"
+              placeholder="name@example.com"
+              placeholderTextColor={colors.mutedForeground}
+              style={[styles.contactInput, { color: colors.foreground, backgroundColor: colors.card, borderColor: colors.border }]}
+            />
+          ) : (
+            <TextInput
+              testID="email-code-input"
+              value={code}
+              onChangeText={setCode}
+              keyboardType="number-pad"
+              autoComplete="one-time-code"
+              placeholder="One-time code"
+              placeholderTextColor={colors.mutedForeground}
+              style={[styles.contactInput, { color: colors.foreground, backgroundColor: colors.card, borderColor: colors.border }]}
+            />
+          )}
+          {error ? <Txt size={13} color={colors.negative}>{error}</Txt> : null}
+          <PrimaryButton
+            title={pending ? 'Please wait…' : codeSent ? 'Verify and sign in' : 'Send sign-in code'}
+            disabled={pending || auth.busy}
+            onPress={() => codeSent
+              ? void runAuth(() => auth.loginWithEmailCode(email, code.trim()))
+              : sendEmailCode()}
+          />
+          {codeSent ? <Pressable onPress={sendEmailCode} accessibilityRole="button"><Txt size={13} color={colors.mutedForeground}>Send a new code</Txt></Pressable> : null}
         </View>
       ) : flow === 'welcome' ? (
         <ScrollView contentContainerStyle={styles.welcomePage} showsVerticalScrollIndicator={false}>
           <View style={styles.welcomeTop}>
             <Brand />
-            <DemoBadge />
+            <DemoBadge label={auth.configured ? 'PRIVY AUTH' : 'PREVIEW MODE'} />
           </View>
           <OnboardingChart />
           <View style={styles.welcomeCopy}>
-            <Txt size={32} weight="semibold" style={styles.welcomeTitle}>The market moves 1%.</Txt>
-            <Txt size={32} weight="semibold" style={styles.welcomeTitle}>You profit $500.</Txt>
+            <Txt size={31} weight="semibold" style={styles.welcomeTitle}>Explore tokenized stocks.</Txt>
             <Txt size={16} color={colors.mutedForeground} style={styles.centerText}>
-              Up or down — discover the next trend with simulated trading ideas.
+              Browse BNB Chain stock tokens and review every step before a transaction.
             </Txt>
           </View>
           <View style={styles.authActions}>
-            <PrimaryButton title="Continue with Google" icon="globe" variant="white" onPress={proceedToPasscode} />
-            <View style={styles.orRow}>
-              <View style={[styles.divider, { backgroundColor: colors.border }]} />
-              <Txt size={13} color={colors.mutedForeground}>or continue with</Txt>
-              <View style={[styles.divider, { backgroundColor: colors.border }]} />
-            </View>
-            <View style={styles.authOptions}>
-              <Pressable onPress={() => { setContact(''); setFlow('phone'); }} style={[styles.authCircle, { backgroundColor: colors.secondary }]} accessibilityLabel="Continue with phone">
-                <Feather name="smartphone" size={23} color={colors.foreground} />
-              </Pressable>
-              <Pressable onPress={() => { setContact(''); setFlow('email'); }} style={[styles.authCircle, { backgroundColor: colors.secondary }]} accessibilityLabel="Continue with email">
-                <Feather name="mail" size={23} color={colors.foreground} />
-              </Pressable>
-            </View>
-            <Txt size={11} color={colors.mutedForeground} style={styles.centerText}>
-              Sign-in and market data are simulated. No brokerage is connected.
-            </Txt>
+            {auth.configured ? (
+              <>
+                <PrimaryButton title={pending ? 'Connecting…' : 'Continue with Google'} icon="globe" variant="white" disabled={pending || auth.busy} onPress={() => void runAuth(auth.loginWithGoogle)} />
+                <PrimaryButton title="Continue with Apple" icon="smartphone" variant="dark" disabled={pending || auth.busy} onPress={() => void runAuth(auth.loginWithApple)} />
+                <View style={styles.orRow}>
+                  <View style={[styles.divider, { backgroundColor: colors.border }]} />
+                  <Txt size={13} color={colors.mutedForeground}>or</Txt>
+                  <View style={[styles.divider, { backgroundColor: colors.border }]} />
+                </View>
+                <PrimaryButton title="Continue with email" icon="mail" variant="outline" disabled={pending || auth.busy} onPress={() => { setEmail(''); setCode(''); setCodeSent(false); setError(null); setFlow('email'); }} />
+                {error ? <Txt size={13} color={colors.negative} style={styles.centerText}>{error}</Txt> : null}
+                <Txt size={11} color={colors.mutedForeground} style={styles.centerText}>Sign-in is secured by Privy. Your embedded wallet is created after login.</Txt>
+              </>
+            ) : (
+              <>
+                <PrimaryButton title="Continue in preview mode" icon="eye" variant="white" onPress={() => session.finishOnboarding('Preview user')} />
+                <Txt size={11} color={colors.mutedForeground} style={styles.centerText}>
+                  Privy is not configured. Preview uses sample account data; no real wallet or orders are available.
+                </Txt>
+              </>
+            )}
             <Txt size={11} color={colors.mutedForeground} style={styles.legalText}>
-              By continuing, you agree to the <Txt size={11} color={colors.foreground}>Risk Disclosure</Txt>, <Txt size={11} color={colors.foreground}>Client Agreement</Txt> and other documents.
+              By continuing, you agree to the <Txt size={11} color={colors.foreground}>Risk Disclosure</Txt> and <Txt size={11} color={colors.foreground}>Terms of Service</Txt>.
             </Txt>
           </View>
         </ScrollView>
-      ) : (
-        <View style={styles.contactPage}>
-          <Pressable onPress={() => setFlow('welcome')} style={styles.backButton} accessibilityLabel="Back">
-            <Feather name="arrow-left" size={22} color={colors.foreground} />
-          </Pressable>
-          <Brand small />
-          <Txt size={27} weight="semibold">{flow === 'email' ? 'Enter your email' : 'Enter your phone'}</Txt>
-          <Txt size={14} color={colors.mutedForeground}>
-            This field is for the demo only. No message will be sent.
-          </Txt>
-          <TextInput
-            testID="contact-input"
-            value={contact}
-            onChangeText={setContact}
-            keyboardType={flow === 'email' ? 'email-address' : 'phone-pad'}
-            autoCapitalize="none"
-            placeholder={flow === 'email' ? 'name@example.com' : '+1 555 123 4567'}
-            placeholderTextColor={colors.mutedForeground}
-            style={[styles.contactInput, { color: colors.foreground, backgroundColor: colors.card, borderColor: colors.border }]}
-          />
-          <PrimaryButton title="Continue" onPress={proceedToPasscode} />
-          <DemoBadge label="SIMULATED SIGN-IN" />
-        </View>
-      )}
+      ) : null}
     </SafeAreaView>
   );
 }
@@ -216,14 +225,7 @@ const styles = StyleSheet.create({
   authOptions: { flexDirection: 'row', justifyContent: 'center', gap: 18 },
   authCircle: { width: 58, height: 58, borderRadius: 32, alignItems: 'center', justifyContent: 'center' },
   legalText: { textAlign: 'center', lineHeight: 17 },
-  passcodePage: { flex: 1, paddingHorizontal: 22, alignItems: 'center', justifyContent: 'space-between', paddingVertical: 20 },
   backButton: { alignSelf: 'flex-start', padding: 8 },
-  passcodeHeading: { alignItems: 'center', gap: 13, marginTop: 3 },
-  pinDots: { flexDirection: 'row', gap: 22, marginTop: 18 },
-  pinDot: { width: 13, height: 13, borderRadius: 8 },
-  keypad: { width: '100%', maxWidth: 390, flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center' },
-  key: { width: '33.33%', height: 72, alignItems: 'center', justifyContent: 'center' },
-  skipButton: { paddingVertical: 10, paddingHorizontal: 20 },
   contactPage: { flex: 1, padding: 22, paddingTop: 12, gap: 17 },
   contactInput: { height: 54, borderRadius: 16, borderWidth: 1, paddingHorizontal: 16, fontSize: 16, fontFamily: 'Inter_500Medium', marginTop: 6 },
 });

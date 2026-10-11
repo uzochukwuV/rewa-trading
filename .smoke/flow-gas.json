@@ -1,0 +1,19 @@
+{
+  "status": 200,
+  "latencyMs": 648,
+  "payload": {
+    "code": 0,
+    "msg": "success",
+    "data": {
+      "evmLegacyGasPrice": {
+        "lowGasPrice": "50600003",
+        "mediumGasPrice": "54388095",
+        "highGasPrice": "83069362"
+      },
+      "eip1559GasPrice": null,
+      "solanaGasPrice": null
+    },
+    "timestamp": 1791469012898,
+    "success": true
+  }
+}

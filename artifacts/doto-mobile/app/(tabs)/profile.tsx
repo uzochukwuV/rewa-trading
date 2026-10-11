@@ -3,6 +3,7 @@ import { Alert, Pressable, StyleSheet, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useAppState } from '@/context/AppState';
+import { usePrivyAuth } from '@/context/PrivyAuth';
 import { money } from '@/data/market';
 import { useColors } from '@/hooks/useColors';
 import { DemoBadge, Page, Panel, PrimaryButton, SectionHeading, Txt } from '@/components/ui';
@@ -32,27 +33,34 @@ export default function ProfileScreen() {
   const colors = useColors();
   const router = useRouter();
   const state = useAppState();
+  const auth = usePrivyAuth();
   const showInfo = (title: string, detail: string) => Alert.alert(title, detail);
-  const signOut = () => Alert.alert('Leave the demo?', 'Your sample trades and preferences stay saved on this device.', [
+  const signOut = () => Alert.alert(auth.authenticated ? 'Sign out?' : 'Leave preview mode?', 'Sample trades and preferences stay saved on this device.', [
     { text: 'Stay here', style: 'cancel' },
-    { text: 'Sign out', style: 'destructive', onPress: () => { state.signOut(); router.replace('/'); } },
+    { text: 'Sign out', style: 'destructive', onPress: () => {
+      void (async () => {
+        if (auth.authenticated) await auth.logout();
+        state.signOut();
+        router.replace('/');
+      })();
+    } },
   ]);
 
   return (
     <Page>
       <View style={styles.header}>
-        <View><Txt size={25} weight="semibold">Profile</Txt><Txt size={13} color={colors.mutedForeground}>Your demo account</Txt></View>
-        <DemoBadge label="DEMO" />
+        <View><Txt size={25} weight="semibold">Account</Txt><Txt size={13} color={colors.mutedForeground}>{auth.authenticated ? 'Privy account' : 'Preview account'}</Txt></View>
+        <DemoBadge label={auth.authenticated ? 'PRIVY' : 'DEMO'} />
       </View>
       <Panel style={styles.userCard}>
         <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
-          <Txt size={23} weight="bold" color={colors.primaryForeground}>{state.userName.charAt(0).toUpperCase()}</Txt>
+          <Txt size={23} weight="bold" color={colors.primaryForeground}>{auth.authenticated ? 'P' : state.userName.charAt(0).toUpperCase()}</Txt>
         </View>
         <View style={{ flex: 1, gap: 5 }}>
-          <Txt size={17} weight="semibold">{state.userName}</Txt>
-          <Txt size={12} color={colors.mutedForeground}>Demo trader · Sample profile</Txt>
+          <Txt size={17} weight="semibold">{auth.authenticated ? 'Privy user' : state.userName}</Txt>
+          <Txt size={12} color={colors.mutedForeground} numberOfLines={1}>{auth.authenticated ? `Account ${auth.userId ?? ''}` : 'Preview trader · Sample profile'}</Txt>
         </View>
-        <Pressable onPress={() => showInfo('Profile', 'This profile is stored locally for the demo.')} accessibilityLabel="Edit profile">
+        <Pressable onPress={() => showInfo('Profile', auth.authenticated ? 'Your account is authenticated with Privy.' : 'This profile is stored locally for the preview.')} accessibilityLabel="Account information">
           <Feather name="edit-2" size={18} color={colors.mutedForeground} />
         </Pressable>
       </Panel>
@@ -68,13 +76,15 @@ export default function ProfileScreen() {
           </Panel>
         ))}
       </View>
-      <SectionHeading title="Account" />
+      <SectionHeading title={auth.authenticated ? 'Privy wallet' : 'Preview account'} />
       <Panel style={{ paddingVertical: 2, paddingHorizontal: 13, gap: 0 }}>
-        <ProfileItem icon="user" title="Personal details" subtitle="Name and contact information" onPress={() => showInfo('Personal details', 'Your profile details are sample data for this demo.')} />
+        <ProfileItem icon="credit-card" title={auth.walletReady ? 'BNB Smart Chain wallet' : 'Wallet status'} subtitle={auth.authenticated ? (auth.walletAddress ?? auth.error ?? 'Preparing your embedded wallet…') : 'No real wallet in preview mode'} onPress={() => showInfo('Embedded wallet', auth.walletAddress ? `${auth.walletAddress}\nNetwork: BNB Smart Chain (chain ID 56)` : auth.authenticated ? auth.error ?? 'Privy is preparing the embedded BNB Smart Chain wallet.' : 'Configure Privy to create an embedded wallet after sign-in.')} />
         <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: colors.border }} />
-        <ProfileItem icon="shield" title="Verification" subtitle="Demo profile · Not verified" onPress={() => showInfo('Verification', 'Identity verification is not available in this mock app.')} />
-        <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: colors.border }} />
-        <ProfileItem icon="credit-card" title="My wallet" subtitle={`Demo balance ${money(state.walletBalance)}`} onPress={() => showInfo('Demo wallet', 'Use Add money or Withdraw on Home to adjust sample funds. No real payment methods are connected.')} />
+        <ProfileItem icon="user" title="Identity" subtitle={auth.authenticated ? `Privy user ${auth.userId ?? ''}` : 'Local preview identity'} onPress={() => showInfo('Identity', auth.authenticated ? 'Your app session is managed by Privy.' : 'This identity is local sample data.')} />
+        {!auth.authenticated ? <>
+          <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: colors.border }} />
+          <ProfileItem icon="dollar-sign" title="Sample buying power" subtitle={money(state.walletBalance)} onPress={() => showInfo('Sample balance', 'This preview balance is local sample data and is not connected to a wallet.')} />
+        </> : null}
       </Panel>
       <SectionHeading title="Help and information" />
       <Panel style={{ paddingVertical: 2, paddingHorizontal: 13, gap: 0 }}>
@@ -84,8 +94,8 @@ export default function ProfileScreen() {
         <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: colors.border }} />
         <ProfileItem icon="settings" title="App preferences" subtitle="Notifications, language and security" onPress={() => showInfo('Preferences', 'App preferences are not connected in this demo.')} />
       </Panel>
-      <PrimaryButton title="Sign out of demo" icon="log-out" variant="outline" onPress={signOut} />
-      <Txt size={11} color={colors.mutedForeground} style={{ textAlign: 'center' }}>Doto visual prototype · No real account access</Txt>
+      <PrimaryButton title={auth.authenticated ? 'Sign out' : 'Leave preview mode'} icon="log-out" variant="outline" onPress={signOut} />
+      <Txt size={11} color={colors.mutedForeground} style={{ textAlign: 'center' }}>{auth.authenticated ? 'Authentication and embedded wallet provided by Privy · Trading is not enabled' : 'Preview mode · No real account or wallet access'}</Txt>
     </Page>
   );
 }

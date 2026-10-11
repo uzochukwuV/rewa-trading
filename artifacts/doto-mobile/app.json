@@ -8,9 +8,12 @@
     "scheme": "doto-mobile",
     "userInterfaceStyle": "dark",
     "ios": {
-      "supportsTablet": false
+      "supportsTablet": false,
+      "bundleIdentifier": "com.doto.mobile"
     },
-    "android": {},
+    "android": {
+      "package": "com.doto.mobile"
+    },
     "web": {
       "favicon": "./assets/images/icon.png"
     },
@@ -23,7 +26,9 @@
           "image": "./assets/images/icon.png",
           "resizeMode": "contain"
         }
-      ]
+      ],
+      "expo-secure-store",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true,

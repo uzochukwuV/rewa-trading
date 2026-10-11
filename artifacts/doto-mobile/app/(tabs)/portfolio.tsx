@@ -3,6 +3,7 @@ import { Alert, Pressable, StyleSheet, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useAppState, PositionStatus } from '@/context/AppState';
+import { useMarketData } from '@/context/MarketData';
 import { money } from '@/data/market';
 import { useColors } from '@/hooks/useColors';
 import { AssetMark, DemoBadge, Page, Panel, PrimaryButton, SectionHeading, Txt, marketFor } from '@/components/ui';
@@ -17,6 +18,7 @@ export default function PortfolioScreen() {
   const colors = useColors();
   const router = useRouter();
   const state = useAppState();
+  const { markets } = useMarketData();
   const [tab, setTab] = useState<PositionStatus>('open');
   const positions = useMemo(() => state.positions.filter((position) => position.status === tab), [state.positions, tab]);
   return (
@@ -48,14 +50,14 @@ export default function PortfolioScreen() {
       {positions.length ? (
         <View style={{ gap: 11 }}>
           {positions.map((position) => {
-            const market = marketFor(position.symbol);
+            const market = markets.find((item) => item.symbol === position.symbol) ?? marketFor(position.symbol);
             return (
               <Panel key={position.id} style={styles.positionCard}>
                 <View style={styles.positionTop}>
                   <AssetMark market={market} size={43} />
                   <View style={{ flex: 1, gap: 3 }}>
                     <Txt size={14} weight="semibold">{position.symbol}</Txt>
-                    <Txt size={12} color={colors.mutedForeground}>{position.side} · {position.size.toFixed(2)} lots</Txt>
+                    <Txt size={12} color={colors.mutedForeground}>{position.side} · {position.size.toFixed(2)} tokens</Txt>
                   </View>
                   <View style={{ alignItems: 'flex-end', gap: 3 }}>
                     <Txt size={14} weight="semibold">{money(position.currentPrice)}</Txt>
@@ -72,7 +74,7 @@ export default function PortfolioScreen() {
                     variant="outline"
                     onPress={() => Alert.alert('Close demo position?', `Close the ${position.side.toLowerCase()} position on ${position.symbol}?`, [
                       { text: 'Cancel', style: 'cancel' },
-                      { text: 'Close position', onPress: () => state.closePosition(position.id) },
+                      { text: 'Close position', onPress: () => state.closePosition(position.id, market.price) },
                     ])}
                   />
                 ) : null}

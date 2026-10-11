@@ -30,8 +30,8 @@ interface AppStateValue extends AppData {
   signOut: () => void;
   toggleFavorite: (symbol: string) => void;
   setSelectedSymbol: (symbol: string) => void;
-  openPosition: (symbol: string, side: 'Buy' | 'Sell', size: number) => void;
-  closePosition: (id: string) => void;
+  openPosition: (symbol: string, side: 'Buy' | 'Sell', size: number, price?: number) => void;
+  closePosition: (id: string, price?: number) => void;
   addFunds: (amount: number) => void;
   withdrawFunds: (amount: number) => boolean;
 }
@@ -42,8 +42,8 @@ const INITIAL_DATA: AppData = {
   userName: 'Victor Ezeanor',
   walletBalance: 8240.5,
   positions: [],
-  favorites: ['BTCUSD', 'XAUUSD'],
-  selectedSymbol: 'BTCUSD',
+  favorites: ['NVDAB', 'NVDAon'],
+  selectedSymbol: 'NVDAB',
 };
 
 const AppStateContext = createContext<AppStateValue | null>(null);
@@ -106,8 +106,8 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     update({ selectedSymbol: symbol });
   }, [update]);
 
-  const openPosition = useCallback((symbol: string, side: 'Buy' | 'Sell', size: number) => {
-    const price = marketPrice(symbol);
+  const openPosition = useCallback((symbol: string, side: 'Buy' | 'Sell', size: number, currentPrice?: number) => {
+    const price = currentPrice ?? marketPrice(symbol);
     const position: Position = {
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       symbol,
@@ -128,11 +128,11 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const closePosition = useCallback((id: string) => {
+  const closePosition = useCallback((id: string, currentPrice?: number) => {
     setData((current) => {
       const positions = current.positions.map((position) =>
         position.id === id
-          ? { ...position, status: 'closed' as const, currentPrice: marketPrice(position.symbol) }
+          ? { ...position, status: 'closed' as const, currentPrice: currentPrice ?? marketPrice(position.symbol) }
           : position,
       );
       const next = { ...current, positions };

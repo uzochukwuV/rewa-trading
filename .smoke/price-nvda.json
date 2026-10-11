@@ -1,0 +1,28 @@
+{
+  "status": 200,
+  "latencyMs": 446,
+  "payload": {
+    "code": 0,
+    "msg": "success",
+    "data": [
+      {
+        "binanceChainId": "56",
+        "tokenContractAddress": "0xa9ee28c80f960b889dfbd1902055218cba016f75",
+        "platformId": "ondo",
+        "tokenPrice": "230.850287661279829359",
+        "referencePrice": "230.455",
+        "tokenPriceUpdatedAt": 1791683358560
+      },
+      {
+        "binanceChainId": "56",
+        "tokenContractAddress": "0x02fca66c1d1afb4e2a7884261eb00f63598a7436",
+        "platformId": "bstock",
+        "tokenPrice": "230.30000000",
+        "referencePrice": "230.120914",
+        "tokenPriceUpdatedAt": 1791683360630
+      }
+    ],
+    "timestamp": 1791683361888,
+    "success": true
+  }
+}

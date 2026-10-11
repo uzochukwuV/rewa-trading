@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAppState } from '@/context/AppState';
+import { useMarketData } from '@/context/MarketData';
 import { money } from '@/data/market';
 import { useColors } from '@/hooks/useColors';
 import { AssetMark, DemoBadge, MiniChart, Page, Panel, PrimaryButton, SectionHeading, Txt, marketFor } from '@/components/ui';
@@ -13,9 +14,10 @@ export default function AssetDetailScreen() {
   const colors = useColors();
   const router = useRouter();
   const state = useAppState();
+  const { markets, source } = useMarketData();
   const params = useLocalSearchParams<{ symbol?: string }>();
   const symbol = typeof params.symbol === 'string' ? params.symbol : state.selectedSymbol;
-  const market = marketFor(symbol);
+  const market = markets.find((item) => item.symbol === symbol) ?? marketFor(symbol);
   const [tab, setTab] = useState<DetailTab>('Details');
   const [period, setPeriod] = useState('1D');
   const favorite = state.favorites.includes(market.symbol);
@@ -33,7 +35,7 @@ export default function AssetDetailScreen() {
         </Pressable>
         <View style={styles.assetHeading}>
           <AssetMark market={market} size={36} />
-          <View><Txt size={15} weight="semibold">{market.name}</Txt><Txt size={11} color={colors.mutedForeground}>{market.symbol} · Demo market</Txt></View>
+          <View><Txt size={15} weight="semibold">{market.name}</Txt><Txt size={11} color={colors.mutedForeground}>{market.ticker} · {market.provider} · {market.symbol}</Txt></View>
         </View>
         <Pressable onPress={() => state.toggleFavorite(market.symbol)} style={styles.iconButton} accessibilityLabel={favorite ? 'Remove from favorites' : 'Add to favorites'}>
           <Feather name="star" size={19} color={favorite ? colors.primary : colors.mutedForeground} />
@@ -42,17 +44,17 @@ export default function AssetDetailScreen() {
       <View style={styles.priceBlock}>
         <View>
           <Txt size={29} weight="semibold">{money(market.price)}</Txt>
-          <Txt size={12} color={colors.mutedForeground}>Indicative demo price</Txt>
+          <Txt size={12} color={colors.mutedForeground}>{source === 'binance' ? 'Indicative Binance price' : 'Indicative sample price'}</Txt>
         </View>
-        <View style={[styles.changePill, { backgroundColor: market.change >= 0 ? `${colors.primary}20` : `${colors.destructive}20` }]}>
-          <Feather name={market.change >= 0 ? 'arrow-up-right' : 'arrow-down-right'} size={15} color={market.change >= 0 ? colors.primary : colors.destructive} />
-          <Txt size={12} weight="semibold" color={market.change >= 0 ? colors.primary : colors.destructive}>{market.change >= 0 ? '+' : ''}{market.change.toFixed(2)}%</Txt>
+        <View style={[styles.changePill, { backgroundColor: market.referenceChange >= 0 ? `${colors.primary}20` : `${colors.destructive}20` }]}>
+          <Feather name={market.referenceChange >= 0 ? 'arrow-up-right' : 'arrow-down-right'} size={15} color={market.referenceChange >= 0 ? colors.primary : colors.destructive} />
+          <Txt size={12} weight="semibold" color={market.referenceChange >= 0 ? colors.primary : colors.destructive}>{market.referenceChange >= 0 ? '+' : ''}{market.referenceChange.toFixed(2)}% vs ref</Txt>
         </View>
       </View>
 
       <Panel style={styles.chartCard}>
         <View style={styles.chartLabels}><Txt size={12} color={colors.mutedForeground}>Price movement</Txt><DemoBadge label="MOCK CHART" /></View>
-        <MiniChart height={171} color={market.change >= 0 ? colors.primary : colors.destructive} />
+        <MiniChart height={171} color={market.referenceChange >= 0 ? colors.primary : colors.destructive} />
         <View style={styles.periodRow}>{['1H', '4H', '1D', '1W', '1M'].map((item) => (
           <Pressable key={item} onPress={() => setPeriod(item)} style={[styles.period, period === item && { backgroundColor: colors.secondary }]}>
             <Txt size={11} weight={period === item ? 'semibold' : 'regular'} color={period === item ? colors.foreground : colors.mutedForeground}>{item}</Txt>
@@ -76,10 +78,10 @@ export default function AssetDetailScreen() {
             {[
               ['Day high', money(market.price * 1.018)],
               ['Day low', money(market.price * 0.983)],
-              ['24h change', `${market.change >= 0 ? '+' : ''}${market.change.toFixed(2)}%`],
+              ['Price vs reference', `${market.referenceChange >= 0 ? '+' : ''}${market.referenceChange.toFixed(2)}%`],
               ['Market', market.category],
               ['Spread', 'Variable · sample'],
-              ['Trading hours', 'Demo schedule'],
+              ['Market status', market.marketStatus],
             ].map(([label, value], index) => (
               <View key={label} style={[styles.statRow, index > 0 && { borderTopColor: colors.border }]}>
                 <Txt size={12} color={colors.mutedForeground}>{label}</Txt>

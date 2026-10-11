@@ -4,13 +4,20 @@ import { Tabs } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
+import { Txt } from '@/components/ui';
 
 const ICONS: Record<string, keyof typeof Feather.glyphMap> = {
   index: 'home',
   discover: 'search',
-  trade: 'trending-up',
+  trade: 'repeat',
   portfolio: 'briefcase',
-  profile: 'user',
+};
+
+const LABELS: Record<string, string> = {
+  index: 'Home',
+  discover: 'Markets',
+  trade: 'Swap',
+  portfolio: 'Portfolio',
 };
 
 interface DotoTabBarProps {
@@ -43,12 +50,13 @@ function DotoTabBar({ state, navigation }: DotoTabBarProps) {
         const active = state.index === index;
         const icon = ICONS[route.name] ?? 'circle';
         const color = active ? colors.foreground : colors.mutedForeground;
+          const label = LABELS[route.name] ?? route.name;
         return (
           <Pressable
             key={route.key}
             testID={`tab-${route.name}`}
             accessibilityRole="button"
-            accessibilityLabel={route.name === 'index' ? 'Home' : route.name}
+            accessibilityLabel={label}
             accessibilityState={{ selected: active }}
             onPress={() => {
               const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
@@ -57,11 +65,12 @@ function DotoTabBar({ state, navigation }: DotoTabBarProps) {
             style={({ pressed }) => [
               styles.tab,
               active && { backgroundColor: colors.accent },
-              route.name === 'trade' && styles.tradeTab,
+              route.name === 'trade' && styles.swapTab,
               pressed && { opacity: 0.72 },
             ]}
           >
-            <Feather name={icon} size={route.name === 'trade' ? 22 : 21} color={color} />
+            <Feather name={icon} size={route.name === 'trade' ? 21 : 19} color={color} />
+            <Txt size={10} weight={active ? 'semibold' : 'medium'} color={color}>{label}</Txt>
           </Pressable>
         );
       })}
@@ -80,10 +89,10 @@ export default function TabLayout() {
       }}
     >
       <Tabs.Screen name="index" options={{ title: 'Home' }} />
-      <Tabs.Screen name="discover" options={{ title: 'Discover' }} />
-      <Tabs.Screen name="trade" options={{ title: 'Trade' }} />
+      <Tabs.Screen name="discover" options={{ title: 'Markets' }} />
+      <Tabs.Screen name="trade" options={{ title: 'Swap' }} />
       <Tabs.Screen name="portfolio" options={{ title: 'Portfolio' }} />
-      <Tabs.Screen name="profile" options={{ title: 'Profile' }} />
+      <Tabs.Screen name="profile" options={{ title: 'Profile', href: null }} />
     </Tabs>
   );
 }
@@ -110,9 +119,10 @@ const styles = StyleSheet.create({
     height: 46,
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 3,
     borderRadius: 25,
   },
-  tradeTab: {
+  swapTab: {
     marginHorizontal: 5,
   },
 });

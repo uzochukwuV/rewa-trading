@@ -12,6 +12,7 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const { handleBinanceRequest } = require('./binance-proxy.cjs');
 
 const STATIC_ROOT = path.resolve(__dirname, '..', 'static-build');
 const TEMPLATE_PATH = path.resolve(__dirname, 'templates', 'landing-page.html');
@@ -143,6 +144,10 @@ const server = http.createServer((req, res) => {
     if (pathname === '/') {
       return serveLandingPage(req, res, landingPageTemplate, appName);
     }
+  }
+
+  if (pathname.startsWith('/api/binance/')) {
+    return handleBinanceRequest(req, res, `${pathname}${url.search}`);
   }
 
   serveStaticFile(pathname, res);

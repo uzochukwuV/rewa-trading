@@ -40,11 +40,16 @@ export default function HomeScreen() {
       <Page>
         <View style={styles.homeHeader}>
           <Brand small />
-          <Pressable onPress={() => router.push('/(tabs)/profile')} style={[styles.accountPill, { backgroundColor: colors.card }]} accessibilityRole="button" accessibilityLabel="Open account and wallet settings">
-            <View style={[styles.demoChip, { backgroundColor: colors.secondary }]}><Txt size={11} weight="semibold" color={colors.primary}>{auth.walletReady ? 'BNB' : auth.authenticated ? 'WALLET' : 'DEMO'}</Txt></View>
-            <Txt size={13} weight="medium">{auth.authenticated ? 'Account' : 'Preview account'}</Txt>
-            <Feather name="chevron-down" size={15} color={colors.mutedForeground} />
-          </Pressable>
+          <View style={styles.headerActions}>
+            <Pressable onPress={() => router.push('/(tabs)/profile')} style={[styles.accountPill, { backgroundColor: colors.card }]} accessibilityRole="button" accessibilityLabel="Open account and wallet settings">
+              <View style={[styles.demoChip, { backgroundColor: colors.secondary }]}><Txt size={11} weight="semibold" color={colors.primary}>{auth.walletReady ? 'BNB' : auth.authenticated ? 'WALLET' : 'DEMO'}</Txt></View>
+              <Txt size={13} weight="medium">{auth.authenticated ? 'Account' : 'Preview account'}</Txt>
+              <Feather name="chevron-down" size={15} color={colors.mutedForeground} />
+            </Pressable>
+            <Pressable onPress={() => router.push('/ai')} style={[styles.aiButton, { backgroundColor: colors.primary }]} accessibilityRole="button" accessibilityLabel="Chat with Doto AI">
+              <Feather name="message-circle" size={19} color={colors.primaryForeground} />
+            </Pressable>
+          </View>
         </View>
         <View style={styles.statusLine}>
           <Txt size={12} color={colors.mutedForeground}>Tokenized stocks • {source === 'binance' ? 'BNB Chain' : 'Demo'}</Txt>
@@ -129,6 +134,8 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   homeHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   accountPill: { flexDirection: 'row', alignItems: 'center', gap: 7, borderRadius: 24, paddingVertical: 7, paddingHorizontal: 8 },
+  headerActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  aiButton: { width: 39, height: 39, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
   demoChip: { borderRadius: 10, paddingHorizontal: 8, paddingVertical: 4 },
   statusLine: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: -5 },
   balanceBlock: { alignItems: 'center', gap: 5, paddingVertical: 3 },

@@ -32,7 +32,7 @@ function RootLayoutNav() {
   useEffect(() => {
     if (!auth.ready) return;
 
-    const isProtectedRoute = segments[0] === '(tabs)' || segments[0] === 'asset';
+    const isProtectedRoute = segments[0] === '(tabs)' || segments[0] === 'asset' || segments[0] === 'ai';
     if (!auth.authenticated && isProtectedRoute) {
       router.replace('/');
     } else if (auth.authenticated && !isProtectedRoute) {
@@ -45,6 +45,7 @@ function RootLayoutNav() {
       <Stack.Screen name="index" options={{ headerShown: false }} />
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="asset/[symbol]" options={{ headerShown: false }} />
+      <Stack.Screen name="ai" options={{ headerShown: false }} />
     </Stack>
   );
 }

@@ -1,0 +1,18 @@
+{
+  "status": 200,
+  "latencyMs": 489,
+  "payload": {
+    "code": 0,
+    "msg": "success",
+    "data": [
+      {
+        "data": "0x095ea7b3000000000000000000000000b44446b0c8e56988c34f7ff73ae904982b5fdda50000000000000000000000000000000000000000000000008ac7230489e80000",
+        "dexContractAddress": "0xB44446b0c8E56988c34f7Ff73Ae904982b5FdDA5",
+        "gasLimit": "70000",
+        "gasPrice": "53862329"
+      }
+    ],
+    "timestamp": 1791469012149,
+    "success": true
+  }
+}

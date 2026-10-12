@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Modal, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as Crypto from 'expo-crypto';
@@ -279,7 +279,9 @@ export default function TradeScreen() {
             {sheet === 'asset' ? <>
               <View style={styles.sheetHeader}><Txt size={20} weight="semibold">Choose a stock token</Txt><Pressable onPress={() => setSheet(null)}><Feather name="x" size={21} color={colors.mutedForeground} /></Pressable></View>
               <Txt size={12} color={colors.mutedForeground}>Select the exact issuer and token representation on BNB Chain.</Txt>
-              {markets.map((item) => <Pressable key={item.symbol} onPress={() => { setSymbol(item.symbol); state.setSelectedSymbol(item.symbol); resetQuote(); setSheet(null); }} style={[styles.marketOption, { borderColor: colors.border }]}><AssetMark market={item} size={38} /><View style={{ flex: 1, gap: 3 }}><Txt size={14} weight="semibold">{item.ticker} · {item.provider}</Txt><Txt size={11} color={colors.mutedForeground}>{item.name} · {item.symbol}</Txt></View><Txt size={12} weight="medium">{money(item.price)}</Txt></Pressable>)}
+              <ScrollView style={styles.assetList} nestedScrollEnabled showsVerticalScrollIndicator>
+                {markets.map((item) => <Pressable key={item.symbol} onPress={() => { setSymbol(item.symbol); state.setSelectedSymbol(item.symbol); resetQuote(); setSheet(null); }} style={[styles.marketOption, { borderColor: colors.border }]}><AssetMark market={item} size={38} /><View style={{ flex: 1, gap: 3 }}><Txt size={14} weight="semibold">{item.ticker} · {item.provider}</Txt><Txt size={11} color={colors.mutedForeground}>{item.name} · {item.symbol}</Txt></View><Txt size={12} weight="medium">{money(item.price)}</Txt></Pressable>)}
+              </ScrollView>
             </> : sheet === 'pay' ? <>
               <View style={styles.sheetHeader}><Txt size={20} weight="semibold">Choose stablecoin</Txt><Pressable onPress={() => setSheet(null)}><Feather name="x" size={21} color={colors.mutedForeground} /></Pressable></View>
               {STABLES.map((item) => <Pressable key={item.symbol} onPress={() => { setStable(item); resetQuote(); setSheet(null); }} style={[styles.marketOption, { borderColor: colors.border }]}><View style={[styles.stableIcon, { backgroundColor: colors.secondary }]}><Txt size={14} weight="bold" color={colors.primary}>{item.symbol[0]}</Txt></View><View style={{ flex: 1 }}><Txt size={14} weight="semibold">{item.symbol}</Txt><Txt size={11} color={colors.mutedForeground}>BNB Chain · {item.decimals} decimals</Txt></View><Feather name={stable.symbol === item.symbol ? 'check-circle' : 'circle'} size={19} color={stable.symbol === item.symbol ? colors.primary : colors.border} /></Pressable>)}
@@ -340,6 +342,7 @@ const styles = StyleSheet.create({
   handle: { width: 38, height: 4, borderRadius: 3, alignSelf: 'center', opacity: 0.6, marginBottom: 2 },
   sheetHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
   marketOption: { minHeight: 58, borderTopWidth: StyleSheet.hairlineWidth, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 10 },
+  assetList: { flexShrink: 1, minHeight: 0 },
   reviewTokens: { borderRadius: 18, padding: 14, gap: 12 },
   reviewToken: { gap: 5 },
   cancel: { alignItems: 'center', padding: 5 },

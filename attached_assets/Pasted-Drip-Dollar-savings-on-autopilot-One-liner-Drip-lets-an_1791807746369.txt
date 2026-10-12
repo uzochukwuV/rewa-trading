@@ -1,0 +1,52 @@
+Drip: Dollar savings on autopilot
+
+One-liner: Drip lets anyone in an emerging market turn local currency into dollar-denominated stock exposure on autopilot, from as little as $20 a month, in a wallet they control.
+
+The problem
+
+Millions of people in emerging markets want dollar assets to protect their savings, but access is broken in three ways:
+
+Getting in is painful. Moving local currency into stablecoins means P2P hunting, bad rates, and scam risk.
+Crypto tools are built for traders. Wallets, gas, seed phrases, and chain choices put off exactly the people who most need a savings habit.
+Small amounts get ignored. Traditional brokers have minimums and fees that don’t suit someone investing $20.
+Why now
+Tokenized stocks are about 82% of all RWA holders, so retail demand is proven. 
+[theblock](https://www.theblock.co/research/tokenization/rwa-tokenization-2026-tokenized-stocks-drive-next-phase-417702)
+Around 80% of tokenized stock trades come from emerging markets, and the median trade is about $18.81. That is a small-ticket, recurring-habit market, which is exactly what Drip is built for. 
+[chaincatcher](https://www.chaincatcher.com/en/article/2275136)
+BNB Chain became the leading tokenized equities chain in H1 2026, so the infrastructure exists. What’s missing is the user experience on top of it. 
+[cnhinews](https://www.cnhinews.com/news/article_4739663f-5a36-5183-a1ce-bdc394159041.html)
+The product
+Local-currency on-ramp. Pay in naira, cedis, or whatever you hold, and receive stablecoins at a transparent rate.
+Auto-invest plans. Pick an amount ($20, $50, $100) and a schedule. Drip buys tokenized stocks automatically.
+Goal-based savings. “$20 a month toward a laptop fund in dollars,” with progress tracking, instead of a trading screen.
+Curated baskets. Simple, diversified options such as a broad-market basket or a tech basket, so users don’t have to pick stocks.
+Non-custodial wallet. Users keep control of their funds. Drip handles gas, chain selection, and recovery so there is no crypto jargon.
+Drip Plus (optional subscription). Auto-rebalancing, tax and reporting exports, and goal analytics, priced under 1% of a typical user’s balance.
+Business model
+Revenue	How it works
+Spread or fee on volume	Small fee on on-ramp and recurring buys (target: a fraction of a percent per transaction)
+Referral revenue	Affiliate income from the platforms and protocols users route through
+Drip Plus	Optional subscription, aimed at users with larger balances
+
+Revenue per user on a $20 plan is small, so the model depends on scale and a mix of income streams. Per-user revenue and target user numbers are assumptions to validate in a pilot.
+
+Competition and moat
+
+Binance already offers recurring buys and cheap stock access, and it is also the platform we build on. We don’t compete on the buy button. We compete on three things it doesn’t focus on:
+
+Local on-ramp quality and trust in specific markets
+A savings-habit experience instead of a trading experience
+Non-custodial simplicity for first-time users
+
+Over time the moat is local payment partnerships, user trust, and the savings data that powers better plans.
+
+Risks we’re upfront about
+Regulation: availability of tokenized stocks and rules on auto-investing vary by country. We start with a legal review per launch market.
+Not real shares: tokenized stocks don’t give full shareholder rights, and we’ll say so clearly in the product.
+Platform dependence: we design the wallet to work across venues and chains so we aren’t tied to one exchange.
+Go-to-market
+
+Launch in one country with a strong crypto user base and a reliable local payment rail. Grow through community referrals (“invite a friend, both get fee-free months”), creators who teach dollar saving, and partnerships with local fintech and payment providers.
+
+The ask

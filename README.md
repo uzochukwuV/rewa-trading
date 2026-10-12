@@ -122,19 +122,18 @@ Phases 1–4 of the Doto RWA mobile app are implemented.
 
 ### Phase 5 — Binance Agentic Wallet AI Copilot (not implemented)
 
-The proposed next app phase is an optional AI stock copilot powered by Binance Agentic Wallet capabilities. It is separate from the existing Privy embedded wallet and should be added only with explicit user authorization.
 
-- Decide whether to integrate a real Agentic Wallet session or present a clearly labeled demo handoff.
+
+- integrate a real Agentic Wallet session 
 - Show the Agentic Wallet’s separate address, balance, permissions, spending limits, and revocation state.
 - Keep Agentic Wallet activity and holdings separate from the user’s Privy wallet.
 - For any action, show the asset, side, amount, quote, fees, and risks and require user confirmation before execution.
-- If the real integration is not available, label research, quote, or execution results as a demo—not a submitted order.
+- Local-currency on-ramp. Pay in naira, cedis, or whatever you hold, and receive stablecoins at a transparent rate.
+- Auto-invest plans. Pick an amount ($20, $50, $100) and a schedule. Doto buys tokenized stocks automatically from credit card like a monthly subscription.
+- Curated baskets. Simple, diversified options such as a broad-market basket or a tech basket, so users don’t have to pick stocks.
+- Drip Plus (optional subscription). Auto-rebalancing, tax and reporting exports, and goal analytics, priced under 1% of a typical user’s balance.
 
-### Phase 6 — Hackathon readiness
 
-- Confirm live API and wallet flows end to end; otherwise clearly label the affected flow as fixture-backed or a demo.
-- Check loading, empty, stale-data, unsupported-region, halted-market, wallet-rejection, insufficient-balance/gas, and failed-transaction states.
-- Document which wallet authorizes each action and what the demo does and does not execute.
 
 ## Configuration and transaction notes
 

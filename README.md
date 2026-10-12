@@ -1,10 +1,8 @@
-# Drip — Dollar savings on autopilot
+# Doto RWA Mobile
 
-Drip is a mobile app concept for helping people in emerging markets build a dollar-denominated savings habit and, over time, invest in tokenized stock exposure from a wallet they control.
+**Doto RWA Mobile** is a social-first mobile app for discovering and trading tokenized equities on BNB Chain. Users can browse tokenized-stock listings, sign in with Privy when configured, access an embedded wallet, review a trade, and view wallet-backed portfolio information.
 
-> **Product direction:** Turn local currency into dollar-denominated stock exposure on autopilot, starting from $20 a month.
->
-> The installed APK is an early app build. The roadmap below describes the intended direction; it is not a claim that these features are already available.
+The app distinguishes bStock and Ondo token representations of the same underlying stock. Binance RWA market data can fall back to saved sample fixtures when live API access is unavailable; sample values must not be treated as live quotes or executable orders.
 
 ## Hackathon links
 
@@ -15,7 +13,7 @@ Drip is a mobile app concept for helping people in emerging markets build a doll
 
 ## App screenshots
 
-These screenshots show the current Android build. The savings-first roadmap below describes proposed next steps. Keep the `images/` folder alongside this README and `video.mp4` at the repository root on the `main2` branch so GitHub can render the images and walkthrough.
+These screenshots show the current Doto Android app. Keep the `images/` folder alongside this README and `video.mp4` at the repository root on the `main2` branch so GitHub can render the images and walkthrough.
 
 <table>
   <tr>
@@ -43,7 +41,7 @@ These screenshots show the current Android build. The savings-first roadmap belo
 ## App walkthrough
 
 <video src="https://github.com/youngambille-jpg/AUSD-Cross-Border-Wallet/raw/refs/heads/main2/video.mp4" controls preload="metadata" width="360">
-  <a href="https://github.com/youngambille-jpg/AUSD-Cross-Border-Wallet/blob/main2/video.mp4">Watch or download the Drip app walkthrough video.</a>
+  <a href="https://github.com/youngambille-jpg/AUSD-Cross-Border-Wallet/blob/main2/video.mp4">Watch or download the Doto app walkthrough video.</a>
 </video>
 
 If the video player does not appear in your Markdown viewer, [open or download the walkthrough video](https://github.com/youngambille-jpg/AUSD-Cross-Border-Wallet/blob/main2/video.mp4).
@@ -68,7 +66,7 @@ unzip -o app.apk/doto-mobile-android-bb3d32a31ce0fc41bdcccb3407080563beff7d8b.zi
 
 1. Transfer `app.apk/app-release.apk` to the phone, or extract the ZIP on the phone with its file manager.
 2. Open the APK file to install it. If Android asks, allow your browser or file manager to install apps from this source.
-3. Open Drip and continue through the available sign-in or preview flow.
+3. Open Doto and continue through the available sign-in or preview flow.
 
 To install from a computer with Android Debug Bridge (ADB) connected to the phone:
 
@@ -92,53 +90,56 @@ The ZIP in the repository is the download bundle. It contains an APK that is abo
 
 For the repository download links above to work, keep the ZIP bundle at the linked path on the `main2` branch. If a new build changes the archive filename, update the download links in this README as well.
 
-## What the early build is for
+## Implemented product phases
 
-The Android build is an early demonstration of a mobile wallet and tokenized-stock experience. Market access, wallet setup, and sign-in can depend on the build configuration and supported providers. It is not yet the full recurring-savings product described below. In particular, saving a plan or viewing this README does **not** schedule a payment, deposit, or stock purchase.
+Phases 1–4 of the Doto RWA mobile app are implemented.
+
+### Phase 1 — Tokenized-equity foundation
+
+- Market discovery is focused on tokenized equities on BNB Chain.
+- Listings distinguish the provider, underlying stock, token symbol, contract, reference price, and trading status where data is available.
+- Signed Binance RWA market-data requests use saved sample fixtures as a fallback when live access is unavailable.
+
+### Phase 2 — Social sign-in and embedded wallet
+
+- Privy sign-in supports the configured Google, Apple, and email methods.
+- Signing in provisions or retrieves a user’s embedded EVM wallet on BNB Smart Chain (chain ID 56).
+- Session restoration, sign-out, wallet status, and a local preview path are supported.
+- Live Privy sign-in requires the public app configuration to be set for the build; preview mode is available without it.
+
+### Phase 3 — Swap and transaction review
+
+- The app supports a tokenized-stock buy/sell flow with a quote and pre-trade review.
+- Where live trading integration is configured, transaction signing uses the Privy wallet and BNB Chain.
+- A saved quote or fixture-backed outcome is a preview—not proof a trade was broadcast or completed. Review the wallet prompt carefully and do not sign during a walkthrough unless you intend to authorize that transaction.
+
+### Phase 4 — Portfolio and account
+
+- The app includes wallet and portfolio views, account settings, network information, and risk context.
+- Preview/sample information is separate from wallet-derived holdings.
 
 ## Roadmap
 
-The product should feel like a savings habit first and a trading tool second. These are proposed next steps, not features promised by the current APK.
+### Phase 5 — Binance Agentic Wallet AI Copilot (not implemented)
 
-### 1. Start with a dollar goal
+The proposed next app phase is an optional AI stock copilot powered by Binance Agentic Wallet capabilities. It is separate from the existing Privy embedded wallet and should be added only with explicit user authorization.
 
-- Let someone name a goal such as “laptop fund,” pick an amount such as $20 per month, and choose a contribution schedule.
-- Show contributions and progress toward the goal in plain language; do not imply a guaranteed return.
-- Make the plan easy to change, pause, or cancel.
+- Decide whether to integrate a real Agentic Wallet session or present a clearly labeled demo handoff.
+- Show the Agentic Wallet’s separate address, balance, permissions, spending limits, and revocation state.
+- Keep Agentic Wallet activity and holdings separate from the user’s Privy wallet.
+- For any action, show the asset, side, amount, quote, fees, and risks and require user confirmation before execution.
+- If the real integration is not available, label research, quote, or execution results as a demo—not a submitted order.
 
-### 2. Make recurring investing understandable
+### Phase 6 — Hackathon readiness
 
-- Offer clear $20, $50, and $100 plan examples and a user-selected schedule.
-- Show the amount, conversion rate, fees, intended asset or basket, and expected order date before any live action.
-- Add execution history, reminders, and skip, pause, and cancel controls. Do not turn on automatic purchases until execution, consent, failure handling, and market eligibility have been implemented and reviewed.
+- Confirm live API and wallet flows end to end; otherwise clearly label the affected flow as fixture-backed or a demo.
+- Check loading, empty, stale-data, unsupported-region, halted-market, wallet-rejection, insufficient-balance/gas, and failed-transaction states.
+- Document which wallet authorizes each action and what the demo does and does not execute.
 
-### 3. Add a trusted local-currency on-ramp
+## Configuration and transaction notes
 
-- Begin with one launch country and a verified local payment rail rather than promising availability everywhere.
-- Show the live exchange rate, all fees, delivery timing, and the stablecoin amount before confirmation.
-- Complete local legal and regulatory review before accepting payments or enabling investments in that market.
-
-### 4. Offer simple basket ideas
-
-- Explain broad-market and technology basket concepts in everyday language.
-- Show what each basket holds, how allocations work, how often they may change, and the risks and fees.
-- Clearly distinguish a basket of tokenized products from a regulated fund or direct ownership of company shares.
-
-### 5. Make self-custody easier to use safely
-
-- Keep users in control of their wallet while simplifying network selection, gas costs, and recovery.
-- Explain each signature and permission request before the user approves it.
-- Design for portability across supported venues and chains rather than depending on just one provider.
-
-### 6. Validate sustainable growth
-
-- Test referrals, creator-led dollar-saving education, and local fintech partnerships after the core experience is trusted.
-- Consider optional Drip Plus features—such as rebalancing, goal analytics, and reporting exports—only after validating demand, costs, and applicable tax rules.
-- Treat transaction-fee, referral, and subscription revenue as assumptions to test in a pilot, not proven user economics.
-
-## Important product risks
-
-- Rules for local payments, recurring investments, and tokenized assets differ by country; availability requires market-by-market review.
-- Tokenized stocks are third-party products and are not the same as owning the underlying shares or receiving full shareholder rights.
-- Prices, liquidity, provider availability, execution, and network fees can change. No returns are guaranteed.
-- A self-custody wallet gives users control and responsibility for their assets and transaction approvals.
+- The mobile app’s signed Binance proxy currently serves public RWA market data. User-scoped server endpoints are not yet available.
+- Live market access and Privy login depend on build/server configuration. Keep Binance API credentials and Privy server credentials on the server; never put them in `EXPO_PUBLIC_*` variables.
+- Saved fixture prices and quotes are snapshots. Do not describe them as live, sign a fixture quote, or claim a simulated result was broadcast.
+- Tokenized equities are third-party assets, not direct ownership of the underlying shares, and may have limited availability, liquidity, and trading hours.
+- Transactions can be irreversible and assets can lose value. Review each wallet approval carefully; this app is not financial advice.
